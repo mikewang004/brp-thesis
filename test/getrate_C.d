@@ -1,0 +1,4 @@
+
+# DO NOT DELETE
+./getrate_C.so: /pbs/throng/km3net/software/root/6.22.06/include/RVersion.h /pbs/throng/km3net/software/root/6.22.06/include/RConfig.h /pbs/throng/km3net/software/root/6.22.06/include/TClass.h /pbs/throng/km3net/software/root/6.22.06/include/TDictAttributeMap.h /pbs/throng/km3net/software/root/6.22.06/include/TInterpreter.h /pbs/throng/km3net/software/root/6.22.06/include/TROOT.h /pbs/throng/km3net/software/root/6.22.06/include/TBuffer.h /pbs/throng/km3net/software/root/6.22.06/include/TMemberInspector.h /pbs/throng/km3net/software/root/6.22.06/include/TError.h /pbs/throng/km3net/software/root/6.22.06/include/RtypesImp.h /pbs/throng/km3net/software/root/6.22.06/include/TIsAProxy.h /pbs/throng/km3net/software/root/6.22.06/include/TFileMergeInfo.h /pbs/throng/km3net/software/root/6.22.06/include/TCollectionProxyInfo.h /pbs/throng/km3net/software/root/6.22.06/bin/rootcling
+getrate_C__ROOTBUILDVERSION= 6.22/06
