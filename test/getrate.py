@@ -27,15 +27,14 @@ for i in range(0, 100):
 print(yaxis.GetBinWidth(20))
 
 binarray[1, :] = np.cumsum(binarray[0,:])
-print(binarray)
 
 for i in range(0, max_no_xbins):
     for j in range(0, 100):
         hit_rate_test[i, j] = data2.Integral(i, i+1, j, j+1)
         
+hit_rate_test = hit_rate_test.swapaxes(1, 0)
 
-plt.imshow(hit_rate_test)
-plt.show()
+plt.hist(hit_rate_test, bins=binarray[0, :])
     
 
 
