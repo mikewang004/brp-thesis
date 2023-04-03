@@ -1,4 +1,4 @@
-# $211db5ad-bb50-433e-96de-b44b253159db$
+    # $211db5ad-bb50-433e-96de-b44b253159db$
 # GIT 17.0.0
 # ROOT 6.22/06
 # application JPMTThreshold
@@ -146,6 +146,7 @@ mu=0.206
 %.slope=7
 %.threshold=0.24
 %.thresholdBand=0.12
+#PMT ident.    Channel no. Eff. Gain. 
 PMT= 806451584  0 0.764 1.117 0.447  7.24 -1.00 0.240
 PMT= 806451584  1 0.630 0.748 0.395  7.24 -1.00 0.240
 PMT= 806451584  2 0.676 0.649 0.382  7.24 -1.00 0.240
