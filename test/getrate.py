@@ -26,6 +26,8 @@ for i in range(0, 100):
     binarray[0, i] = yaxis.GetBinWidth(i)
 print(yaxis.GetBinWidth(20))
 
+#Couple binwidths to values 
+
 binarray[1, :] = np.cumsum(binarray[0,:])
 
 for i in range(0, max_no_xbins):
