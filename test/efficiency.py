@@ -54,6 +54,8 @@ class gaussfit():
 # map map to effficiency rate 
 
 def get_map_data(eff_map, effs, pmt_per_dom):
+    """Substitutes module-id for corresponding efficiency and generates a mapping
+    of efficiencies to du and floor number"""
     mapdata = np.zeros([len(effs[:, 0]), 4])
     for i in range(0, len(effs)):
         if i % pmt_per_dom == 0:
@@ -78,6 +80,7 @@ def get_unique_pairs(mapdata, counter, pmt_per_dom):
     
     
 def get_dom_floor_rate(domfloor, hit_data):
+    """Loads in data corresponding to a du and floor."""
     dom, floor = domfloor[0], domfloor[1]
     domstr = "DU%i" %dom; floorstr = "F%i" %floor 
     domattr = getattr(hit_data.Detector, domstr); floorattr = getattr(domattr, floorstr)
@@ -85,6 +88,7 @@ def get_dom_floor_rate(domfloor, hit_data):
     return domfloordata
     
 def get_domfloor_data(domfloordata, pmt_per_dom):
+    """Converts rootpy histogram to python-handable data."""
     domfloorhitrate = np.zeros([pmt_per_dom, 100])
 
     for i in range(0, pmt_per_dom):
@@ -139,7 +143,8 @@ def main():
     work_dir = "/Documents/uni_shit/zee-onzin/test"
     effs = np.loadtxt("data-133-144-eff.txt", skiprows = 149, usecols=[1,2,3])
     eff_map = np.loadtxt("map.txt")
-    pmt_per_dom = 31
+    low_pmt, high_pmt = 11, 30
+    pmt_per_dom = high_pmt - low_pmt
     hit_data = ROOT.TFile.Open("jra_133_14307.root")
     mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
     bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt")
@@ -156,7 +161,6 @@ def main():
     #Plot data now 
     print(domfloormeanarray.shape) #axis0 pmt numbers, axis1 dom/floor combos
     plt.plot()
-    low_pmt, high_pmt = 0, 12
     for j in range(0, max_runs):
         pmt_eff, ___ = get_unique_pairs(mapdata, j, pmt_per_dom)
         print(pmt_eff[low_pmt:high_pmt,1])
