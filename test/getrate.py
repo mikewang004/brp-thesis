@@ -30,6 +30,8 @@ binarray = np.zeros([100, 2])
 for i in range(0, 100):
     binarray[i, 0] = yaxis.GetBinWidth(i)
 binarray[:, 1] = np.cumsum(binarray[:, 0]) #y-axis bin to rate 
+
+
 np.savetxt("y-bin_size.txt", binarray)
 
 #Plot array by binsize 

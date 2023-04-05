@@ -26,7 +26,7 @@ class gaussfit():
         return np.sqrt(np.sum(self.ydata * (self.xdata - self.mean())**2) / np.sum(self.ydata))
     
     def gaussfit(self):
-        popt, pcov = sp.curve_fit(gauss, self.xdata, self.ydata, p0=[max(self.ydata), self.mean(), self.sigma()], maxfev = 10000)
+        popt, pcov = sp.curve_fit(gauss, self.xdata, self.ydata, p0=[max(self.ydata), self.mean(), self.sigma()])
         return popt, pcov
     
     def gaussplot(self):
@@ -72,7 +72,8 @@ def get_unique_pairs(mapdata, counter, pmt_per_dom):
         pmt_eff = mapdata[pmt_per_dom*counter:pmt_per_dom*(counter+1), 0:2] #only contains data for corresponding domfloor
     dom_floor = mapdata[pmt_per_dom*counter, 2:4]
     counter = counter + 1
-    return np.roll(pmt_eff, 1, axis=1), dom_floor
+    return np.roll(pmt_eff, 1, axis=1), dom_floor, counter
+
 
 
     
@@ -97,13 +98,13 @@ def get_domfloor_data(domfloordata, pmt_per_dom):
 
 
 #Fit gaussian to the pmt data 
-def domfloorgaussian(domfloorhitrate, bin_popt, bin_pcov, pmt_per_dom):
+def domfloorgaussian(domfloorhitrate, bin_popt, bin_pcov):
     """Fits gaussian to the data and returns mean of that"""
     """To do: parallise this if routine becomes slow"""
-    pmt_mean_gauss_array = np.zeros(pmt_per_dom)
-    for i in range(0, pmt_per_dom):#range(0, len(domfloorhitrate[0,:])):
+    pmt_mean_gauss_array = np.zeros(31)
+    for i in range(0, 31):#range(0, len(domfloorhitrate[0,:])):
         currenthit = domfloorhitrate[:, i]
-        #print(currenthit)
+        print(currenthit)
         ytest = np.arange(0, 100)
         test = gaussfit(ytest, currenthit)
         pmt_mean_gauss_array[i] = test.get_mean_coords()[0]
@@ -131,7 +132,6 @@ def plot_hit_eff(pmt_eff, domfloormean):
     plt.title('Hit rate vs efficiency; du 10 floor 3')
     plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
     plt.show()
-    
 
 #Doing whole plotting process for multiple doms 
 
@@ -142,32 +142,18 @@ def main():
     pmt_per_dom = 31
     hit_data = ROOT.TFile.Open("jra_133_14307.root")
     mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
+    counter = 0
     bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt")
-    max_runs = 10
-    domfloormeanarray = np.zeros([pmt_per_dom, max_runs]) #pmt x domfloors 
-    domfloorlist = eff_map[:, 1:3]
+    max_runs = 100
+    domfloormeanarray = np.zeros([31, max_runs])
     for i in range(0, max_runs):
-        pmt_eff, domfloor = get_unique_pairs(mapdata, i, pmt_per_dom)
-        domfloordata = get_dom_floor_rate(domfloor, hit_data)
-        domfloorhitrate = get_domfloor_data(domfloordata, pmt_per_dom)
-        domfloormean = domfloorgaussian(domfloorhitrate, bin_popt, bin_pcov, pmt_per_dom)
-        domfloormeanarray[:, i] = domfloormean
-    
-    #Plot data now 
-    print(domfloormeanarray.shape) #axis0 pmt numbers, axis1 dom/floor combos
-    plt.plot()
-    low_pmt, high_pmt = 0, 12
-    for j in range(0, max_runs):
-        pmt_eff, ___ = get_unique_pairs(mapdata, j, pmt_per_dom)
-        print(pmt_eff[low_pmt:high_pmt,1])
-        domfloorrate = domfloormeanarray[:, j]
-        plt.scatter(pmt_eff[low_pmt:high_pmt,1], domfloorrate[low_pmt:high_pmt], label="du %i floor %i" %(domfloorlist[j, 0], domfloorlist[j, 1]))
-    plt.title('Hit rate vs efficiency; pmts %i through %i' %(low_pmt, high_pmt-1))
-    plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
-    #plt.legend()
-    #plt.savefig("plotjes/week-14/hitrate-eff-pmts-%i-through-%i.pdf" %(low_pmt, high_pmt-1))
-    plt.show()
-        
+        pmt_eff, domfloor, counter = get_unique_pairs(mapdata, counter, pmt_per_dom)
+    domfloordata = get_dom_floor_rate(domfloor, hit_data)
+    domfloorhitrate = get_domfloor_data(domfloordata, pmt_per_dom)
+    domfloormean = domfloorgaussian(domfloorhitrate, bin_popt, bin_pcov)
+    print(domfloormean)
+    #domfloorhitrate = np.where(domfloorhitrate == 0, np.nan, domfloorhitrate)
+    plot_hit_eff(pmt_eff, domfloormean)
     
 if __name__ == "__main__":
     main()
