@@ -1,12 +1,46 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import scipy.optimize as sp
 import ROOT 
 
-work_dir = "/Documents/uni_shit/zee-onzin/test"
-effs = np.loadtxt("data-133-144-eff.txt", skiprows = 149, usecols=[1,2,3])
-eff_map = np.loadtxt("map.txt")
-pmt_per_dom = 31
-hit_data = ROOT.TFile.Open("jra_133_14307.root")
+def gauss(x, a, x0, sigma):
+    return a*np.exp(-(x-x0)**2/(2*sigma**2))
+
+class gaussfit():
+    """Routine to get gaussian data fitted and plotted. Only requires
+    the x and y data assuming it is gaussian."""
+    def __init__(self, x, y):
+        self.xdata = x
+        self.ydata = y
+        
+    def gaussfunction(x, a, x0, sigma):
+        return a* np.exp(-(x-x0)**2/(2*sigma**2))
+        
+    def mean(self):
+        return np.sum(self.xdata * self.ydata) / np.sum(self.ydata)
+        
+    def sigma(self):
+        return np.sqrt(np.sum(self.ydata * (self.xdata - self.mean())**2) / np.sum(self.ydata))
+    
+    def gaussfit(self):
+        popt, pcov = sp.curve_fit(gauss, self.xdata, self.ydata, p0=[max(self.ydata), self.mean(), self.sigma()])
+        return popt, pcov
+    
+    def gaussplot(self):
+        plt.plot()
+        popt, pcov = self.gaussfit()
+        plt.scatter(self.xdata, self.ydata, label="raw data")
+        plt.plot(self.xdata, gauss(self.xdata, *popt), label="gauss fit", color="orange")
+        plt.title("Gaussian of a PMT rate distribution.")
+        plt.xlabel("Rate [kHz]")
+        plt.legend()
+        plt.show()
+        return popt, pcov
+    
+    def get_mean_coords(self):
+        popt, pcov = self.gaussfit()
+        mean = self.mean()
+        return mean, gauss(mean, *popt)
 
 #data2 = hit_data.Detector.DU10.F10.h_pmt_rate_distributions_Summaryslice
 
@@ -16,7 +50,7 @@ hit_data = ROOT.TFile.Open("jra_133_14307.root")
 
 # map map to effficiency rate 
 
-def get_map_data(eff_map):
+def get_map_data(eff_map, effs, pmt_per_dom):
     mapdata = np.zeros([len(effs[:, 0]), 4])
     for i in range(0, len(effs)):
         if i % pmt_per_dom == 0:
@@ -29,7 +63,7 @@ def get_map_data(eff_map):
         j = j + 1
     return mapdata
 
-def get_unique_pairs(mapdata, counter):
+def get_unique_pairs(mapdata, counter, pmt_per_dom):
     pmt_eff = np.zeros([pmt_per_dom, 2])
     for i in range(0, pmt_per_dom):
         pmt_eff = mapdata[pmt_per_dom*counter:pmt_per_dom*(counter+1), 0:2] #only contains data for corresponding domfloor
@@ -37,20 +71,18 @@ def get_unique_pairs(mapdata, counter):
     counter = counter + 1
     return np.roll(pmt_eff, 1, axis=1), dom_floor, counter
 
-mapdata = get_map_data(eff_map)
-counter = 0
-for i in range(0, 100):
-    pmt_eff, domfloor, counter = get_unique_pairs(mapdata, counter)
+
+
     
     
-def get_dom_floor_rate(domfloor):
+def get_dom_floor_rate(domfloor, hit_data):
     dom, floor = domfloor[0], domfloor[1]
     domstr = "DU%i" %dom; floorstr = "F%i" %floor 
     domattr = getattr(hit_data.Detector, domstr); floorattr = getattr(domattr, floorstr)
     domfloordata = floorattr.h_pmt_rate_distributions_Summaryslice
     return domfloordata
     
-def get_domfloor_data(domfloordata):
+def get_domfloor_data(domfloordata, pmt_per_dom):
     domfloorhitrate = np.zeros([pmt_per_dom, 100])
 
     for i in range(0, pmt_per_dom):
@@ -60,27 +92,57 @@ def get_domfloor_data(domfloordata):
     domfloorhitrate = domfloorhitrate.swapaxes(1, 0)
     return domfloorhitrate
 
-domfloordata = get_dom_floor_rate(domfloor)
-domfloorhitrate = get_domfloor_data(domfloordata)
 
-domfloorhitrate = np.where(domfloorhitrate == 0, np.nan, domfloorhitrate)
 
-#print(domfloorhitrate)
+#Fit gaussian to the pmt data 
+def domfloorgaussian(domfloorhitrate, filename):
+    """Fits gaussian to the data and returns mean of that"""
+    """To do: parallise this if routine becomes slow"""
+    ybinsize = np.loadtxt(filename)
+    pmt_mean_gauss_array = np.zeros(31)
+    for i in range(0, 31):#range(0, len(domfloorhitrate[0,:])):
+        currenthit = domfloorhitrate[:, i]
+        print(currenthit)
+        ybincumsum = ybinsize[:, 1]
+        ytest = np.arange(0, 100)
+        test = gaussfit(ytest, currenthit)
+        pmt_mean_gauss_array[i] = test.get_mean_coords()[0]
+        #test.gaussplot()
+    return pmt_mean_gauss_array
+
+
+
+        
 
 #Link the dom/floor hits up to the efficiencies per dom 
-def plot_hit_eff(pmt_eff, domfloorhitrate):
+def plot_hit_eff(pmt_eff, domfloormean):
     plt.plot()
     for i in range(0, 11):
-        eff_this_pmt = pmt_eff[i, 1] * np.ones(len(domfloorhitrate[:,1]))
-        domfloorbinno = [~np.isnan(domfloorhitrate[:,i])] * np.arange(0, 100)
-        plt.scatter(eff_this_pmt, domfloorbinno, label="pmt %i" %pmt_eff[i,0])
-    plt.legend()
+        plt.scatter(pmt_eff[:,1], domfloormean, label="pmt %i" %pmt_eff[i,0])
+    #plt.legend()
     plt.title('Hit rate vs efficiency; dom 10 floor 3')
-    plt.ylim(20, 70)
     plt.xlabel("Efficiency"); plt.ylabel("Rate [bin number]")
     plt.show()
 
-plot_hit_eff(pmt_eff, domfloorhitrate)
+
+def main():
+    work_dir = "/Documents/uni_shit/zee-onzin/test"
+    effs = np.loadtxt("data-133-144-eff.txt", skiprows = 149, usecols=[1,2,3])
+    eff_map = np.loadtxt("map.txt")
+    pmt_per_dom = 31
+    hit_data = ROOT.TFile.Open("jra_133_14307.root")
+    mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
+    counter = 0
+    for i in range(0, 100):
+        pmt_eff, domfloor, counter = get_unique_pairs(mapdata, counter, pmt_per_dom)
+    domfloordata = get_dom_floor_rate(domfloor, hit_data)
+    domfloorhitrate = get_domfloor_data(domfloordata, pmt_per_dom)
+    domfloormean = domfloorgaussian(domfloorhitrate, "y-bin_size.txt")
+    #domfloorhitrate = np.where(domfloorhitrate == 0, np.nan, domfloorhitrate)
+    plot_hit_eff(pmt_eff, domfloormean)
+    
+if __name__ == "__main__":
+    main()
 
 
 
