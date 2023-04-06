@@ -143,7 +143,7 @@ def main():
     hit_data = ROOT.TFile.Open("jra_133_14307.root")
     mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
     bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt")
-    max_runs = 10
+    max_runs = 14
     domfloormeanarray = np.zeros([pmt_per_dom, max_runs]) #pmt x domfloors 
     domfloorlist = eff_map[:, 1:3]
     for i in range(0, max_runs):
