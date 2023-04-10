@@ -12,33 +12,25 @@ def exp_func(x, a, b, c):
 class gaussfit():
     """Routine to get gaussian data fitted and plotted. Only requires
     the x and y data assuming it is gaussian."""
+    """Assume bins are along axis 0."""
     def __init__(self, x, y):
         self.xdata = x
         self.ydata = y
         
-    def gaussfunction(x, a, x0, sigma):
-        return a* np.exp(-(x-x0)**2/(2*sigma**2))
-        
     def mean(self):
-        return np.sum(self.xdata * self.ydata) / np.sum(self.ydata)
+        return np.sum(self.xdata * self.ydata, axis=0) / np.sum(self.ydata, axis=0)
         
     def sigma(self):
-        return np.sqrt(np.sum(self.ydata * (self.xdata - self.mean())**2) / np.sum(self.ydata))
+        return np.sqrt(np.sum(self.ydata * (self.xdata - self.mean())**2,axis=0) / np.sum(self.ydata,axis=0))
     
     def gaussfit(self):
-        popt, pcov = sp.curve_fit(gauss, self.xdata, self.ydata, p0=[max(self.ydata), self.mean(), self.sigma()], maxfev = 50000)
-        return popt, pcov
-    
-    def gaussplot(self):
-        plt.plot()
-        popt, pcov = self.gaussfit()
-        plt.scatter(self.xdata, self.ydata, label="raw data")
-        plt.plot(self.xdata, gauss(self.xdata, *popt), label="gauss fit", color="orange")
-        plt.title("Gaussian of a PMT rate distribution.")
-        plt.xlabel("Rate [kHz]")
-        plt.legend()
-        plt.show()
-        return popt, pcov
+        no_pmts = len(self.xdata[0,:])
+        lpopt, lpcov = np.zeros(no_pmts), np.zeros(no_pmts)
+        for i in range(0, no_pmts):
+            #Note: create dict or something as pmt and thus array size will not be larger than 31. 
+            popt, pcov = sp.curve_fit(gauss, self.xdata[:,i], self.ydata[:,i], p0=[max(self.ydata[:,i]), self.mean()[i], self.sigma()[i]], maxfev = 50000)
+            lpopt[i], lpcov[i] = popt, pcov
+        return lpopt, lpcov
     
     def get_mean_coords(self):
         popt, pcov = self.gaussfit()
@@ -102,14 +94,17 @@ def get_domfloor_data(domfloordata, pmt_per_dom):
 #Fit gaussian to the pmt data 
 def domfloorgaussian(domfloorhitrate, bin_popt, bin_pcov, pmt_per_dom):
     """Fits gaussian to the data and returns mean of that"""
-    """To do: parallise this if routine becomes slow"""
     pmt_mean_gauss_array = np.zeros(pmt_per_dom)
-    for i in range(0, pmt_per_dom):#range(0, len(domfloorhitrate[0,:])):
-        currenthit = domfloorhitrate[:, i]
+    #print(domfloorhitrate)
+    ytest = np.swapaxes(np.tile(np.arange(0,100),(pmt_per_dom,1)),1,0)
+    test = gaussfit(ytest, domfloorhitrate)
+    l = test.gaussfit()
+    #for i in range(0, pmt_per_dom):#rang        print(popt, pcov)e(0, len(domfloorhitrate[0,:])):
+        #currenthit = domfloorhitrate[:, i]
         #print(currenthit)
-        ytest = np.arange(0, 100)
-        test = gaussfit(ytest, currenthit)
-        pmt_mean_gauss_array[i] = test.get_mean_coords()[0]
+        #ytest = np.arange(0, 100)
+        #test = gaussfit(ytest, currenthit)
+        #pmt_mean_gauss_array[i] = test.get_mean_coords()[0]
         #test.gaussplot()
     #Scale pmt data correctly
     pmt_mean_gauss_array = exp_func(pmt_mean_gauss_array, *bin_popt)
@@ -149,7 +144,7 @@ def main():
     hit_data = ROOT.TFile.Open("jra_133_14307.root")
     mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
     bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt")
-    max_runs = 377
+    max_runs = 1
     domfloormeanarray = np.zeros([pmt_per_dom, max_runs]) #pmt x domfloors 
     domfloorlist = eff_map[:, 1:3]
     for i in range(0, max_runs):
