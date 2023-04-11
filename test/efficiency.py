@@ -65,6 +65,7 @@ def get_map_data(eff_map, effs, pmt_per_dom):
     return mapdata
 
 def get_unique_pairs(mapdata, counter, pmt_per_dom):
+    """Returns 31 rows of pmt data per dufloor"""
     pmt_eff = np.zeros([pmt_per_dom, 2])
     for i in range(0, pmt_per_dom):
         pmt_eff = mapdata[pmt_per_dom*counter:pmt_per_dom*(counter+1), 0:2] #only contains data for corresponding domfloor
@@ -89,7 +90,6 @@ def get_dom_floor_rate(domfloor, hit_data):
 def get_domfloor_data(domfloordata, pmt_per_dom):
     """Converts rootpy histogram to python-handable data."""
     domfloorhitrate = np.zeros([pmt_per_dom, 100])
-
     for i in range(0, pmt_per_dom):
         for j in range(0, 100):
             domfloorhitrate[i, j] = domfloordata.Integral(i, i+1, j, j+1)
@@ -123,18 +123,7 @@ def fit_bin_size(filename):
     popt, pcov = sp.curve_fit(exp_func, xbins, binsizes[:,1], p0 = [1, 0.1, 0])
     #plt.scatter(xbins, exp_func(xbins, *popt))
     return popt, pcov
-        
 
-#Link the dom/floor hits up to the efficiencies per dom 
-def plot_hit_eff(pmt_eff, domfloormean):
-    "Deprecated; see main file for new function."
-    plt.plot()
-    for i in range(0, 11):
-        plt.scatter(pmt_eff[:,1], domfloormean, label="pmt %i" %pmt_eff[i,0])
-    #plt.legend()
-    plt.title('Hit rate vs efficiency; du 10 floor 3')
-    plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
-    plt.show()
     
 def read_mapdata(str_effs, str_effs_map, low_pmt, high_pmt):
     """Reads in data, returns a map of the efficiencies to du and floor and returns 
@@ -154,7 +143,7 @@ def calc_domfloorhitrate(mapdata, low_pmt, high_pmt,max_runs):
     domfloormeanarray = np.zeros([pmt_per_dom, max_runs]) #pmt x domfloors 
     for i in range(0, max_runs):
         pmt_eff, domfloor = get_unique_pairs(mapdata, i, pmt_per_dom)
-        domfloordata = get_dom_floor_rate(domfloor, hit_data)
+        domfloordata = get_dom_floor_rate(domfloor, hit_data) #domfloordata and mapdata should be sorted correspondingly
         if domfloordata == None: #catch if data does not exist
             domfloormeanarray[:, i] = np.nan * np.ones([len(domfloormeanarray[:,i])])
         else:
@@ -180,16 +169,57 @@ def plot_hitrate_eff(domfloorhitrate, domfloormeanarray, mapdata, low_pmt, high_
     plt.show()
     return 0;
 
+def plot_mean_hitrate_eff(domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs):
+    pmt_per_dom = high_pmt - low_pmt
+    mid_pmt = int(high_pmt/2)
+    plt.plot()
+    for j in range(0, max_runs):
+        pmt_eff, ___ = get_unique_pairs(mapdata, j, pmt_per_dom) #returns all 31 data per dufloor
+        domfloordufrate = domfloormeanarray[:, j]
+        #plt.scatter(np.mean(pmt_eff[low_pmt:high_pmt,1]), np.mean(domfloordufrate[low_pmt:high_pmt]), label="du %i floor %i" %(mapdata[j, 1], mapdata[j, 2]))
+        plt.scatter(np.mean(pmt_eff[low_pmt:mid_pmt,1]), np.mean(domfloordufrate[low_pmt:mid_pmt]), label="du %i floor %i" %(mapdata[j, 1], mapdata[j, 2]), c="red")
+        plt.scatter(np.mean(pmt_eff[mid_pmt:high_pmt,1]), np.mean(domfloordufrate[mid_pmt:high_pmt]), label="du %i floor %i" %(mapdata[j, 1], mapdata[j, 2]), c="blue")
+    plt.title('Hit rate vs efficiency.')
+    plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
+    plt.ylim(0, 12.5)
+    plt.xlim(0, 1.4)
+    #plt.legend()
+    #plt.savefig("plotjes/week-14/hitrate-eff-pmts-%i-through-%i.pdf" %(low_pmt, high_pmt-1))
+    plt.show()
+    return 0;
+
+def plot_mean_hitrate_eff_per_du(domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs):
+    pmt_per_dom = high_pmt - low_pmt
+    mid_pmt = 11
+    #np.savetxt("mapdata2.txt", mapdata)
+    for j in range(0, max_runs):
+        pmt_eff, ___ = get_unique_pairs(mapdata, j, pmt_per_dom)
+        domfloordufrate = domfloormeanarray[:, j]
+        #print(mapdata[j, 2], mapdata[j-1, 2])
+        if mapdata[j, 2] != mapdata[j-1, 2]:
+            plt.title('Hit rate vs efficiency for du %i.' %(mapdata[j,2]))
+            plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
+            plt.ylim(0, 12.5)
+            plt.xlim(0, 1.4)
+            plt.show()
+            plt.plot()
+        plt.scatter(np.mean(pmt_eff[low_pmt:mid_pmt,1]), np.mean(domfloordufrate[low_pmt:mid_pmt]), label="du %i floor %i" %(mapdata[j, 1], mapdata[j, 2]), c="red")
+        plt.scatter(np.mean(pmt_eff[mid_pmt:high_pmt,1]), np.mean(domfloordufrate[mid_pmt:high_pmt]), label="du %i floor %i" %(mapdata[j, 1], mapdata[j, 2]), c="blue")
+    return 0;
+
 def main():
     str_effs = "data-133-144-eff.txt"; str_effs_map = "map.txt"
     max_runs = 377
-    low_pmt, high_pmt = 0, 12
+    low_pmt, high_pmt = 0, 31
     pmt_per_dom = high_pmt - low_pmt
     #low_pmt, high_pmt = 12, 31
     effs_map, mapdata = read_mapdata(str_effs, str_effs_map, low_pmt, high_pmt)
+    mapdata = mapdata[np.lexsort((mapdata[:, 3], mapdata[:, 2]))]
     domfloorhitrate, domfloormeanarray = calc_domfloorhitrate(mapdata, low_pmt, high_pmt, max_runs)
-    
-    plot_hitrate_eff(domfloorhitrate, domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs)
+    print(domfloormeanarray.shape)
+    #plot_hitrate_eff(domfloorhitrate, domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs)
+    #plot_mean_hitrate_eff(domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs)
+    plot_mean_hitrate_eff_per_du(domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs)
         
     
 if __name__ == "__main__":
