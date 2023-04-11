@@ -136,22 +136,22 @@ def plot_hit_eff(pmt_eff, domfloormean):
     plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
     plt.show()
     
+def read_mapdata(str_effs, str_effs_map, low_pmt, high_pmt):
+    """Reads in data, returns a map of the efficiencies to du and floor and returns 
+    a list of dus and floors """
+    effs = np.loadtxt(str_effs, skiprows = 149, usecols=[1,2,3])
+    eff_map = np.loadtxt(str_effs_map)
+    pmt_per_dom = high_pmt - low_pmt
+    mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
+    return eff_map, mapdata
 
-#Doing whole plotting process for multiple doms 
-
-def main():
-    work_dir = "/Documents/uni_shit/zee-onzin/test"
-    effs = np.loadtxt("data-133-144-eff.txt", skiprows = 149, usecols=[1,2,3])
-    eff_map = np.loadtxt("map.txt")
-    low_pmt, high_pmt = 0, 12
-    #low_pmt, high_pmt = 12, 31
+def calc_domfloorhitrate(mapdata, low_pmt, high_pmt,max_runs):
+    """Loads in the mapping of efficiencies to du/floor; returns the mean hit rate 
+    of all applicable du/floors."""
     pmt_per_dom = high_pmt - low_pmt
     hit_data = ROOT.TFile.Open("jra_133_14307.root")
-    mapdata = get_map_data(eff_map, effs ,pmt_per_dom)
-    bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt")
-    max_runs = 377
+    bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt") #y-axis bin to real units 
     domfloormeanarray = np.zeros([pmt_per_dom, max_runs]) #pmt x domfloors 
-    domfloorlist = eff_map[:, 1:3]
     for i in range(0, max_runs):
         pmt_eff, domfloor = get_unique_pairs(mapdata, i, pmt_per_dom)
         domfloordata = get_dom_floor_rate(domfloor, hit_data)
@@ -161,14 +161,16 @@ def main():
             domfloorhitrate = get_domfloor_data(domfloordata, pmt_per_dom)
             domfloormean = domfloorgaussian(domfloorhitrate, bin_popt, bin_pcov, pmt_per_dom)
             domfloormeanarray[:, i] = domfloormean
-    
-    #Plot data now 
-    #print(domfloormeanarray.shape) #axis0 pmt numbers, axis1 dom/floor combos
+    return domfloorhitrate, domfloormeanarray
+#Doing whole plotting process for multiple doms 
+
+def plot_hitrate_eff(domfloorhitrate, domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs):
+    pmt_per_dom = high_pmt - low_pmt
     plt.plot()
     for j in range(0, max_runs):
         pmt_eff, ___ = get_unique_pairs(mapdata, j, pmt_per_dom)
-        domfloorrate = domfloormeanarray[:, j]
-        plt.scatter(pmt_eff[low_pmt:high_pmt,1], domfloorrate[low_pmt:high_pmt], label="du %i floor %i" %(domfloorlist[j, 0], domfloorlist[j, 1]))
+        domfloordufrate = domfloormeanarray[:, j]
+        plt.scatter(pmt_eff[low_pmt:high_pmt,1], domfloordufrate[low_pmt:high_pmt], label="du %i floor %i" %(mapdata[j, 1], mapdata[j, 2]))
     plt.title('Hit rate vs efficiency; pmts %i through %i' %(low_pmt, high_pmt-1))
     plt.xlabel("Efficiency"); plt.ylabel("Rate [kHz]")
     plt.ylim(0, 12.5)
@@ -176,6 +178,18 @@ def main():
     #plt.legend()
     #plt.savefig("plotjes/week-14/hitrate-eff-pmts-%i-through-%i.pdf" %(low_pmt, high_pmt-1))
     plt.show()
+    return 0;
+
+def main():
+    str_effs = "data-133-144-eff.txt"; str_effs_map = "map.txt"
+    max_runs = 377
+    low_pmt, high_pmt = 0, 12
+    pmt_per_dom = high_pmt - low_pmt
+    #low_pmt, high_pmt = 12, 31
+    effs_map, mapdata = read_mapdata(str_effs, str_effs_map, low_pmt, high_pmt)
+    domfloorhitrate, domfloormeanarray = calc_domfloorhitrate(mapdata, low_pmt, high_pmt, max_runs)
+    
+    plot_hitrate_eff(domfloorhitrate, domfloormeanarray, mapdata, low_pmt, high_pmt, max_runs)
         
     
 if __name__ == "__main__":
