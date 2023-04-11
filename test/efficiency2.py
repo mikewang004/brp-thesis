@@ -155,8 +155,10 @@ def recombine_duf_top_bottom_pmts(top_avg, bottom_avg):
             xy[:, :halfway] = top_avg[j:i, 0], top_avg[j:i, 4]
             xy[:, halfway:halfway*2] = bottom_avg[j:i, 0], bottom_avg[j:i, 4]
             print(xy.shape)
-            popt,pcov = sp.curve_fit(lin_func, xy[0, :], xy[1, :])
-            plt.plot(xy[0,:], lin_func(xy[0,:], *popt))
+            popt,pcov = sp.curve_fit(lin_func, xy[0, halfway:], xy[1, halfway:])
+            popt2, pcov2 = sp.curve_fit(lin_func, xy[0, :halfway], xy[1, :halfway])
+            plt.plot(xy[0,:halfway], lin_func(xy[0,:halfway], *popt), label="top fit")
+            plt.plot(xy[0,halfway:], lin_func(xy[0,halfway:], *popt2),label="bottom fit")
             plt.scatter(top_avg[j:i, 0], top_avg[j:i, 4], label="average of pmts 0-11")
             plt.scatter(bottom_avg[j:i, 0], bottom_avg[j:i, 4], label="average of pmts 12-30")
             plt.title("Rate vs efficiency for du no %i" %(top_avg[i, 2]))
