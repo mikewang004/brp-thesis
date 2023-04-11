@@ -17,8 +17,8 @@ def gauss(x, a, x0, sigma):
 def exp_func(x, a, b, c):
     return a*np.exp(b*x) + c
 
-def lin_func(x, a, b):
-    return a*x + b
+def lin_func(x, a):
+    return a*x 
 
 class gaussfit():
     """Routine to get gaussian data fitted and plotted. Only requires
@@ -138,13 +138,13 @@ def avg_top_bottom_pmts(mean_hit_rate, mid_pmt):
     mean_hit_rate = mean_hit_rate.reshape(int(mean_hit_rate.shape[0]/31), 31, 5)
     top_avg = np.mean(mean_hit_rate[:, 0:mid_pmt, :], axis=1)
     bottom_avg = np.mean(mean_hit_rate[:, mid_pmt:31, :], axis=1)
-    print(top_avg)
     return top_avg, bottom_avg
 
 def recombine_duf_top_bottom_pmts(top_avg, bottom_avg):
     n_groups = 2
     top_mask = top_avg[:-1] == top_avg[1:]
     no_doms = top_mask.shape[0]-np.count_nonzero(top_mask[:, 2])
+    xfit = np.linspace(0, 1.4, 100)
     #grouped_doms = np.zeros([no_doms, 18, 2 + n_groups*3])
     j = 0
     for i in range(0, top_avg.shape[0]-1):
@@ -154,11 +154,10 @@ def recombine_duf_top_bottom_pmts(top_avg, bottom_avg):
             halfway = np.abs(j-i)
             xy[:, :halfway] = top_avg[j:i, 0], top_avg[j:i, 4]
             xy[:, halfway:halfway*2] = bottom_avg[j:i, 0], bottom_avg[j:i, 4]
-            print(xy.shape)
-            popt,pcov = sp.curve_fit(lin_func, xy[0, halfway:], xy[1, halfway:])
-            popt2, pcov2 = sp.curve_fit(lin_func, xy[0, :halfway], xy[1, :halfway])
-            plt.plot(xy[0,:halfway], lin_func(xy[0,:halfway], *popt), label="top fit")
-            plt.plot(xy[0,halfway:], lin_func(xy[0,halfway:], *popt2),label="bottom fit")
+            popt,pcov = sp.curve_fit(lin_func, xy[0, :halfway], xy[1, :halfway])
+            popt2, pcov2 = sp.curve_fit(lin_func, xy[0, halfway:], xy[1, halfway:])
+            plt.plot(xfit, lin_func(xfit, *popt), label="top fit")
+            plt.plot(xfit, lin_func(xfit, *popt2),label="bottom fit")
             plt.scatter(top_avg[j:i, 0], top_avg[j:i, 4], label="average of pmts 0-11")
             plt.scatter(bottom_avg[j:i, 0], bottom_avg[j:i, 4], label="average of pmts 12-30")
             plt.title("Rate vs efficiency for du no %i" %(top_avg[i, 2]))
