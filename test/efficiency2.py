@@ -71,21 +71,19 @@ class meanhitrate():
         self.top_avg = top_avg; self.bottom_avg = bottom_avg
         return self.top_avg, self.bottom_avg
     
-    def plot_top_bottom_pmts(self):
+    def plot_top_bottom_pmts(self, fit=True):
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
-        j = 0
-        xfit = np.linscape(0, 1.4, 100)
+        j = 0; k = 0
+        if fit == True:
+            self.fit_top_bottom_pmts()
+            xfit = np.linspace(0, 1.4, 100)
         for i in range(0, self.top_avg.shape[0]-1):
             if top_mask[i,2] == False: #checks if new du starts. 
                 #Concatenate arrays together
-                xy = np.zeros([2, np.abs(j-i)*2])
-                halfway = np.abs(j-i)
-                xy[:, :halfway] = self.top_avg[j:i, 0], self.top_avg[j:i, 4]
-                xy[:, halfway:halfway*2] = self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4]
-                popt,pcov = sp.curve_fit(lin_func, xy[0, :halfway], xy[1, :halfway])
-                popt2, pcov2 = sp.curve_fit(lin_func, xy[0, halfway:], xy[1, halfway:])
-                plt.plot(xfit, lin_func(xfit, *popt), label="top fit")
-                plt.plot(xfit, lin_func(xfit, *popt2),label="bottom fit")
+                if fit == True:
+                    plt.plot(xfit, lin_func(xfit, *self.uppopt[k,:]), label="top fit")
+                    plt.plot(xfit, lin_func(xfit, *self.lowpopt[k, :]),label="bottom fit")
+                    k = k + 1
                 plt.scatter(self.top_avg[j:i, 0], self.top_avg[j:i, 4], label="average of pmts 0-11")
                 plt.scatter(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], label="average of pmts 12-30")
                 plt.title("Rate vs efficiency for du no %i" %(self.top_avg[i, 2]))
@@ -96,17 +94,20 @@ class meanhitrate():
                 plt.legend()
                 plt.show()
                 j = i  
-        
-    def recombine_duf_top_bottom_pmts(self, column_no = 2):
-        """Note column_no in [0,4] corresponding to eff / pmt / du / floor / mean."""
-        max_doms_str = 18
+    
+    def fit_top_bottom_pmts(self):
+        print(self.top_avg, self.bottom_avg)
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
-        no_dus = top_mask.shape[0] - top_mask[:, column_no].sum()
-        du_block_array = np.zeros([ no_dus, no_dus, 5])
+        no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
+        self.uppopt, self.uppcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
+        self.lowpopt, self.lowpcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
+        j = 0; k = 0
         for i in range(0, self.top_avg.shape[0]-1):
-            if top_mask[i,column_no] == False: #checks for start new du.
-                pass
-        
+            if top_mask[i,2] == False:
+                self.uppopt[k,:], self.uppcov[k, :, :] = sp.curve_fit(lin_func, self.top_avg[j:i, 0], self.top_avg[j:i, 4])
+                self.lowpopt[k,:], self.lowpcov[k, :, :] = sp.curve_fit(lin_func, self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4])
+                j = i; k = k + 1
+        return 0;
     
 def fit_bin_size(filename):
     """Corrects for the fact that the y-bin sizes in the ROOT data are exponential.
@@ -201,7 +202,8 @@ def main():
     mean_hit_rate = (calc_hit_rate(mapdata))
     test = meanhitrate(mean_hit_rate)
     top_avg, bottom_avg = test.avg_top_bottom_pmts(mid_pmt)
-    test.recombine_duf_top_bottom_pmts()
+    #test.fit_top_bottom_pmts(2)
+    test.plot_top_bottom_pmts()
     
 if __name__ == "__main__":
     main()
