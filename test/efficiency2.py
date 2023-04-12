@@ -20,6 +20,9 @@ def exp_func(x, a, b, c):
 def lin_func(x, a, b):
     return a*x + b
 
+def get_mean_std(mean_rate_array, axis=0):
+        return np.mean(mean_rate_array, axis=axis), np.std(mean_rate_array, axis =axis)
+
 class gaussfit():
     """Routine to get gaussian data fitted and plotted. Only requires
     the x and y data assuming it is gaussian."""
@@ -69,16 +72,19 @@ class meanhitrate():
         top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
         bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
         self.top_avg = top_avg; self.bottom_avg = bottom_avg
-        return self.top_avg, self.bottom_avg
+        return 0;
     
     def plot_top_bottom_pmts(self, fit=True):
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
+        self.filter_data()
         j = 0; k = 0
         if fit == True:
             self.fit_top_bottom_pmts()
             xfit = np.linspace(0, 1.4, 100)
         for i in range(0, self.top_avg.shape[0]-1):
             if top_mask[i,2] == False: #checks if new du starts. 
+                #curr_top = self.top_avg[j:i, 0] * self.filter_data(self.top_avg)
+                "Todo fix above"
                 #Concatenate arrays together
                 if fit == True:
                     plt.plot(xfit, lin_func(xfit, *self.uppopt[k,:]), label="top fit")
@@ -96,7 +102,6 @@ class meanhitrate():
                 j = i  
     
     def fit_top_bottom_pmts(self):
-        print(self.top_avg, self.bottom_avg)
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
         no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
         self.uppopt, self.uppcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
@@ -108,7 +113,16 @@ class meanhitrate():
                 self.lowpopt[k,:], self.lowpcov[k, :, :] = sp.curve_fit(lin_func, self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4])
                 j = i; k = k + 1
         return 0;
+
     
+    def filter_data(top_avg):
+        """Removes all outliers greater than say 3 sigma from the average"""
+        top_mean, top_std = get_mean_std(top_avg)
+        topdiff = np.abs(top_avg - np.tile(top_mean, (top_avg.shape[0], 1)))
+        outliers = np.greater(top_std, topdiff)
+        outliers = outliers[:, 0] * outliers[:, 4]
+        print(outliers)
+        return outliers
 def fit_bin_size(filename):
     """Corrects for the fact that the y-bin sizes in the ROOT data are exponential.
     Returns fit parameters for a function y = a*exp(b*x) + c"""
@@ -201,7 +215,7 @@ def main():
     mapdata = mapdata[np.lexsort((mapdata[:, 3], mapdata[:, 2]))]
     mean_hit_rate = (calc_hit_rate(mapdata))
     test = meanhitrate(mean_hit_rate)
-    top_avg, bottom_avg = test.avg_top_bottom_pmts(mid_pmt)
+    test.avg_top_bottom_pmts(mid_pmt)
     #test.fit_top_bottom_pmts(2)
     test.plot_top_bottom_pmts()
     
