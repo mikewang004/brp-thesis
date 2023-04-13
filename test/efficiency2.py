@@ -9,6 +9,7 @@ Created on Tue Apr 11 13:56:23 2023
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as sp
+import scipy.stats as stats
 import ROOT 
 
 def gauss(x, a, x0, sigma):
@@ -67,34 +68,39 @@ class meanhitrate():
         self.meanhitrate = mean_hit_rate
         
     def avg_top_bottom_pmts(self, mid_pmt):
+        """Averages over the top (0-11) and bottom (12-31) pmts."""
         self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=1)]
-        self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 5)
-        top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
-        bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
-        self.top_avg = top_avg; self.bottom_avg = bottom_avg
+        self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 5) #block per DOM 
+        self.top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
+        self.bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
+        self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
+        self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
         return 0;
     
     def plot_top_bottom_pmts(self, fit=True):
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
-        self.filter_data()
+        self.top_avg = self.filter_data(self.top_avg)
+        self.bottom_avg = self.filter_data(self.bottom_avg)
         j = 0; k = 0
         if fit == True:
             self.fit_top_bottom_pmts()
             xfit = np.linspace(0, 1.4, 100)
+            print(self.lowlinres)
         for i in range(0, self.top_avg.shape[0]-1):
             if top_mask[i,2] == False: #checks if new du starts. 
-                #curr_top = self.top_avg[j:i, 0] * self.filter_data(self.top_avg)
                 "Todo fix above"
                 #Concatenate arrays together
                 if fit == True:
-                    plt.plot(xfit, lin_func(xfit, *self.uppopt[k,:]), label="top fit")
-                    plt.plot(xfit, lin_func(xfit, *self.lowpopt[k, :]),label="bottom fit")
+                    #plt.plot(xfit, self.uplinres[k, 1] + self.uplinres[k,0] * xfit, label="top fit")
+                    plt.plot(xfit, self.lowlinres[k, 1] + self.lowlinres[k,0] * xfit, label="bottom fit")
                     k = k + 1
-                plt.scatter(self.top_avg[j:i, 0], self.top_avg[j:i, 4], label="average of pmts 0-11")
+                #plt.scatter(self.top_avg[j:i, 0], self.top_avg[j:i, 4], label="average of pmts 0-11")
                 plt.scatter(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], label="average of pmts 12-30")
+                #plt.scatter(np.mean(self.top_avg[j:i, 0]), np.mean(self.top_avg[j:i, 4]), label="mean point top pmts")
+                plt.scatter(np.mean(self.bottom_avg[j:i, 0]), np.mean(self.bottom_avg[j:i, 4]), label="mean point bottom pmts")
                 plt.title("Rate vs efficiency for du no %i" %(self.top_avg[i, 2]))
-                plt.ylim(0, 12.5)
-                plt.xlim(0, 1.4)
+                #plt.ylim(0, 12.5)
+                #plt.xlim(0, 1.4)
                 plt.xlabel("Efficiency")
                 plt.ylabel("Rate [kHz]")
                 plt.legend()
@@ -104,25 +110,28 @@ class meanhitrate():
     def fit_top_bottom_pmts(self):
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
         no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
-        self.uppopt, self.uppcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
-        self.lowpopt, self.lowpcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
+        self.uplinres = np.zeros([no_dus, 5]); self.lowlinres = np.zeros([no_dus, 5])
         j = 0; k = 0
         for i in range(0, self.top_avg.shape[0]-1):
             if top_mask[i,2] == False:
-                self.uppopt[k,:], self.uppcov[k, :, :] = sp.curve_fit(lin_func, self.top_avg[j:i, 0], self.top_avg[j:i, 4])
-                self.lowpopt[k,:], self.lowpcov[k, :, :] = sp.curve_fit(lin_func, self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4])
+                top_mean, ___ = get_mean_std(self.top_avg[j:i])
+                bottom_mean, ___ = get_mean_std(self.bottom_avg[j:i])
+                self.lowlinres[k, :] = stats.linregress(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], alternative='greater')
+                self.uplinres[k, :] = stats.linregress(self.top_avg[j:i, 0], self.top_avg[j:i, 4], alternative='greater')
                 j = i; k = k + 1
         return 0;
 
     
-    def filter_data(top_avg):
+    def filter_data(self, avg_arr):
         """Removes all outliers greater than say 3 sigma from the average"""
-        top_mean, top_std = get_mean_std(top_avg)
-        topdiff = np.abs(top_avg - np.tile(top_mean, (top_avg.shape[0], 1)))
-        outliers = np.greater(top_std, topdiff)
+        top_mean, top_std = get_mean_std(avg_arr)
+        topdiff = np.abs(avg_arr - np.tile(top_mean, (avg_arr.shape[0], 1)))
+        outliers = np.greater(1*top_std, topdiff)
         outliers = outliers[:, 0] * outliers[:, 4]
-        print(outliers)
-        return outliers
+        avg_arr2 = avg_arr[outliers, :]
+        return avg_arr2
+    
+    
 def fit_bin_size(filename):
     """Corrects for the fact that the y-bin sizes in the ROOT data are exponential.
     Returns fit parameters for a function y = a*exp(b*x) + c"""
@@ -167,7 +176,7 @@ def get_du_floor_rate(du, floor, hit_data):
         domfloordata = floorattr.h_pmt_rate_distributions_Summaryslice
         return domfloordata
     except:
-        print(domstr, domattr)
+        print(domattr)
         return None 
     
 def get_du_floor_data(domfloordata, pmt_per_dom):
@@ -194,7 +203,7 @@ def calc_hit_rate(mapdata):
         if dufloordata != None:
             dufloorhitrate = get_du_floor_data(dufloordata, 31)
             for k in range(0, 31):
-                test = gaussfit(ytest, dufloorhitrate[:, k])
+                test = gaussfit(ytest, dufloorhitrate[:, k]) #gets gaussian of hits per rate per pmt 
                 mean_hit_rate[j + k, 4] = exp_func(test.get_mean_coords()[0], *bin_popt) 
                 #to convert bins to real unit as the y-bin size is log
         else:
