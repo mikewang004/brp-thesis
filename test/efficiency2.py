@@ -18,8 +18,8 @@ def gauss(x, a, x0, sigma):
 def exp_func(x, a, b, c):
     return a*np.exp(b*x) + c
 
-def lin_func(x, a, b):
-    return a*x + b
+def lin_func(x, a,b):
+    return a*x
 
 def get_mean_std(mean_rate_array, axis=0):
         return np.mean(mean_rate_array, axis=axis), np.std(mean_rate_array, axis =axis)
@@ -85,29 +85,31 @@ class meanhitrate():
         if fit == True:
             self.fit_top_bottom_pmts()
             xfit = np.linspace(0, 1.4, 100)
-            print(self.lowlinres)
         for i in range(0, self.top_avg.shape[0]-1):
             if top_mask[i,2] == False: #checks if new du starts. 
                 "Todo fix above"
                 #Concatenate arrays together
                 if fit == True:
                     #plt.plot(xfit, self.uplinres[k, 1] + self.uplinres[k,0] * xfit, label="top fit")
-                    plt.plot(xfit, self.lowlinres[k, 1] + self.lowlinres[k,0] * xfit, label="bottom fit")
+                    #plt.plot(xfit, self.lowlinres[k, 1] + self.lowlinres[k,0] * xfit, label="bottom fit")
+                    
+                    plt.plot(xfit, lin_func(xfit, *self.uppopt[k,:]), label="top fit")
+                    plt.plot(xfit, lin_func(xfit, *self.lowpopt[k, :]),label="bottom fit")
                     k = k + 1
-                #plt.scatter(self.top_avg[j:i, 0], self.top_avg[j:i, 4], label="average of pmts 0-11")
+                plt.scatter(self.top_avg[j:i, 0], self.top_avg[j:i, 4], label="average of pmts 0-11")
                 plt.scatter(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], label="average of pmts 12-30")
-                #plt.scatter(np.mean(self.top_avg[j:i, 0]), np.mean(self.top_avg[j:i, 4]), label="mean point top pmts")
+                plt.scatter(np.mean(self.top_avg[j:i, 0]), np.mean(self.top_avg[j:i, 4]), label="mean point top pmts")
                 plt.scatter(np.mean(self.bottom_avg[j:i, 0]), np.mean(self.bottom_avg[j:i, 4]), label="mean point bottom pmts")
                 plt.title("Rate vs efficiency for du no %i" %(self.top_avg[i, 2]))
-                #plt.ylim(0, 12.5)
-                #plt.xlim(0, 1.4)
+                plt.ylim(0, 12.5)
+                plt.xlim(0, 1.4)
                 plt.xlabel("Efficiency")
                 plt.ylabel("Rate [kHz]")
                 plt.legend()
                 plt.show()
                 j = i  
     
-    def fit_top_bottom_pmts(self):
+    def fit_top_bottom_pmts_linres(self):
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
         no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
         self.uplinres = np.zeros([no_dus, 5]); self.lowlinres = np.zeros([no_dus, 5])
@@ -120,15 +122,29 @@ class meanhitrate():
                 self.uplinres[k, :] = stats.linregress(self.top_avg[j:i, 0], self.top_avg[j:i, 4], alternative='greater')
                 j = i; k = k + 1
         return 0;
+    
+
+    def fit_top_bottom_pmts(self):
+        print(self.top_avg, self.bottom_avg)
+        top_mask = self.top_avg[:-1] == self.top_avg[1:]
+        no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
+        self.uppopt, self.uppcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
+        self.lowpopt, self.lowpcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
+        j = 0; k = 0
+        for i in range(0, self.top_avg.shape[0]-1):
+            if top_mask[i,2] == False:
+                self.uppopt[k,:], self.uppcov[k, :, :] = sp.curve_fit(lin_func, self.top_avg[j:i, 0], self.top_avg[j:i, 4])
+                self.lowpopt[k,:], self.lowpcov[k, :, :] = sp.curve_fit(lin_func, self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4])
+                j = i; k = k + 1
+        return 0;
 
     
     def filter_data(self, avg_arr):
         """Removes all outliers greater than say 3 sigma from the average"""
         top_mean, top_std = get_mean_std(avg_arr)
         topdiff = np.abs(avg_arr - np.tile(top_mean, (avg_arr.shape[0], 1)))
-        outliers = np.greater(1*top_std, topdiff)
-        outliers = outliers[:, 0] * outliers[:, 4]
-        avg_arr2 = avg_arr[outliers, :]
+        outliers = np.greater(5*top_std, topdiff)
+        avg_arr2 = avg_arr[outliers[:, 0] * outliers[:, 4], :]
         return avg_arr2
     
     
