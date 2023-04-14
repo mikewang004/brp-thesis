@@ -75,19 +75,19 @@ class meanhitrate():
         self.bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
         self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
         self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
+        self.top_length = self.top_avg.shape[0]
+        self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
         return 0;
     
     def plot_top_bottom_pmts(self, fit=True):
-        top_mask = self.top_avg[:-1] == self.top_avg[1:]
         self.top_avg = self.filter_data(self.top_avg)
         self.bottom_avg = self.filter_data(self.bottom_avg)
         j = 0; k = 0
         if fit == True:
             self.fit_top_bottom_pmts()
-            xfit = np.linspace(0, 1.4, 100)
-        for i in range(0, self.top_avg.shape[0]-1):
-            if top_mask[i,2] == False: #checks if new du starts. 
-                "Todo fix above"
+            xfit = np.linspace(0, 1.4, 2)
+        for i in range(0, self.top_length-1):
+            if self.top_mask[i,2] == False: #checks if new du starts. 
                 #Concatenate arrays together
                 if fit == True:
                     #plt.plot(xfit, self.uplinres[k, 1] + self.uplinres[k,0] * xfit, label="top fit")
@@ -108,14 +108,28 @@ class meanhitrate():
                 plt.legend()
                 plt.show()
                 j = i  
+                
+    def plot_top_bottom_performance(self):
+        k = 0
+        plt.title("Performance of various DUs")
+        plt.xlabel("DU number")
+        plt.ylabel("Linear fit slope")
+        for i in range(0, self.top_length-1):
+            if self.top_mask[i,2] == False:
+                plt.plot(self.top_avg[i, 2], self.uppopt[k,0], c='red', marker="o", ls="")
+                plt.plot(self.bottom_avg[i, 2], self.lowpopt[k,0], c='blue', marker="o", ls="")
+                k = k + 1
+        plt.scatter(np.mean(self.top_avg[:,2]), np.mean(self.uppopt[:,0]), c='darkred', marker="X", label="average performance top pmts")
+        plt.scatter(np.mean(self.bottom_avg[:,2]), np.mean(self.lowpopt[:,0]), c='darkblue', marker="X", label="average performance bottom pmts")
+        plt.legend()
+        plt.show()
     
     def fit_top_bottom_pmts_linres(self):
-        top_mask = self.top_avg[:-1] == self.top_avg[1:]
-        no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
+        no_dus = self.top_mask.shape[0] - self.top_mask[:, 2].sum()
         self.uplinres = np.zeros([no_dus, 5]); self.lowlinres = np.zeros([no_dus, 5])
         j = 0; k = 0
-        for i in range(0, self.top_avg.shape[0]-1):
-            if top_mask[i,2] == False:
+        for i in range(0, self.top_length-1):
+            if self.top_mask[i,2] == False:
                 top_mean, ___ = get_mean_std(self.top_avg[j:i])
                 bottom_mean, ___ = get_mean_std(self.bottom_avg[j:i])
                 self.lowlinres[k, :] = stats.linregress(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], alternative='greater')
@@ -243,6 +257,7 @@ def main():
     test.avg_top_bottom_pmts(mid_pmt)
     #test.fit_top_bottom_pmts(2)
     test.plot_top_bottom_pmts()
+    test.plot_top_bottom_performance()
     
 if __name__ == "__main__":
     main()
