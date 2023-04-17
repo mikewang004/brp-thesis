@@ -124,19 +124,6 @@ class meanhitrate():
         plt.legend()
         plt.show()
     
-    def fit_top_bottom_pmts_linres(self):
-        no_dus = self.top_mask.shape[0] - self.top_mask[:, 2].sum()
-        self.uplinres = np.zeros([no_dus, 5]); self.lowlinres = np.zeros([no_dus, 5])
-        j = 0; k = 0
-        for i in range(0, self.top_length-1):
-            if self.top_mask[i,2] == False:
-                top_mean, ___ = get_mean_std(self.top_avg[j:i])
-                bottom_mean, ___ = get_mean_std(self.bottom_avg[j:i])
-                self.lowlinres[k, :] = stats.linregress(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], alternative='greater')
-                self.uplinres[k, :] = stats.linregress(self.top_avg[j:i, 0], self.top_avg[j:i, 4], alternative='greater')
-                j = i; k = k + 1
-        return 0;
-    
 
     def fit_top_bottom_pmts(self):
         print(self.top_avg, self.bottom_avg)
@@ -219,9 +206,8 @@ def get_du_floor_data(domfloordata, pmt_per_dom):
     domfloorhitrate = domfloorhitrate.swapaxes(1, 0)
     return domfloorhitrate
 
-def calc_hit_rate(mapdata):
-    """To do: fix loop here"""
-    hit_data = ROOT.TFile.Open("jra_133_14307.root")
+def calc_hit_rate(mapdata, filename):
+    hit_data = ROOT.TFile.Open(filename)
     mean_hit_rate = np.zeros([mapdata.shape[0], 5]) # eff / pmt / du / floor / mean or something
     mean_hit_rate[:, 0:4] = np.copy(mapdata)
     j = 0
@@ -247,6 +233,7 @@ def calc_hit_rate(mapdata):
 
     
 def main():
+    filename = "jra_133_14307.root"
     str_effs = "data-133-144-eff.txt"; str_effs_map = "map.txt"
     low_pmt, high_pmt, mid_pmt = 0, 31, 12
     pmt_per_dom = high_pmt - low_pmt
