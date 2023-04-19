@@ -2,11 +2,11 @@ import numpy as np
 
 non_valid_runs = np.loadtxt("non-valid-runs.txt", delimiter=",")
 
-runs = np.array([13670, 14661, 14662])
+runs = np.arange(14440, 14450)
 
 mask = np.in1d(runs, non_valid_runs)
 
-print(mask)
+
 
 if mask.any() == True:
     print(runs[mask])

@@ -6,7 +6,7 @@ JRunAnalyzer -f root://ccxroot:1999//hpss/in2p3.fr/group/km3net/data/raw/sea/KM3
 /sps/km3net/repo/data/calibration/KM3NeT_00000133/v8.0_PMTeff_new/calibration/
 
 # choose some more runs, avoid https://wiki.km3net.de/index.php/Data_Processing_and_Data_Quality_(DPDQ)/Data_Quality/listARCA/D0ARCA021
-# check run duration (should be >1 hour) with 'runinfo DETECTOR RUNNR', so for the 21-string ARCA detector (detector ID 133) then (after 'module load jpp/master)')
+# check run duration (should be >1 hour) with 'runinfo DETECTOR RUNNR', so for the 21-string ARCA detector (detector ID 133) then (after 'module load jpp/master)'
 
 runinfo 133 14421
 
