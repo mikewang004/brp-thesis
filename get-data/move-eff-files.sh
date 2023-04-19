@@ -1,29 +1,41 @@
 #!/bin/bash
 
-# Usage: ./move_files.sh <start_number> <end_number> <source_folder>
-
-start=14399
-end=14422
-source_folder=../../../../../sps/km3net/repo/data/calibration/KM3NeT_00000133/v8.0_PMTeff_new/calibration/
-destination_folder=$(dirname "$0")/
-
-if [ ! -d "$destination_folder" ]; then
-  echo "Error: Destination folder does not exist."
+# Check for correct number of arguments
+if [ $# -ne 3 ]; then
+  echo "Usage: $0 <start_number> <end_number> <source_folder>"
   exit 1
 fi
 
+start=$1
+end=$2
+source_folder=$3
+destination_folder="."
+
+# Check if source folder exists
 if [ ! -d "$source_folder" ]; then
-  echo "Error: Source folder does not exist."
+  echo "Error: Source folder '$source_folder' does not exist."
   exit 1
 fi
 
-for file in "$source_folder"/*ToT.QE.PMTeff.txt; do
+# Create destination folder if it doesn't exist
+if [ ! -d "$destination_folder" ]; then
+  mkdir "$destination_folder"
+fi
+
+# Loop through files in source folder
+for file in "$source_folder"/*; do
+  # Extract the filename
   filename=$(basename "$file")
-  number=$(echo "$filename" | grep -oE '[0-9]+')
-  if [ -n "$number" ] && (( number >= start && number <= end )); then
-    mv "$file" "$destination_folder"
-    echo "Moved $filename to $destination_folder"
+
+  # Check if filename contains the integer range and the string "ToT.QE.PMTeff.txt"
+  if [[ $filename == *ToT.QE.PMTeff.txt* ]]; then
+    number=$(echo "$filename" | grep -oE '[0-9]+')
+    if ((number >= start)) && ((number <= end)); then
+      cp "$file" "$destination_folder"
+      echo "Copied '$filename' to '$destination_folder'"
+    fi
   fi
 done
 
-echo "File movement completed."
+echo "File copying completed."
+
