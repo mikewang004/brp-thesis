@@ -221,11 +221,11 @@ def get_du_floor_data(domfloordata, pmt_per_dom):
 
 def calc_hit_rate(mapdata):
     """To do: fix loop here"""
-    hit_data = ROOT.TFile.Open("jra_133_14307.root")
+    hit_data = ROOT.TFile.Open("test/jra_133_14307.root")
     mean_hit_rate = np.zeros([mapdata.shape[0], 5]) # eff / pmt / du / floor / mean or something
     mean_hit_rate[:, 0:4] = np.copy(mapdata)
     j = 0
-    bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt")
+    bin_popt, bin_pcov = fit_bin_size("test/y-bin_size.txt")
     ytest = np.arange(0, 100)
     #for i in range(0,int(11718/31)):
     for i in range(0,int(mapdata.shape[0]/31)):
@@ -247,7 +247,7 @@ def calc_hit_rate(mapdata):
 
     
 def main():
-    str_effs = "data-133-144-eff.txt"; str_effs_map = "map.txt"
+    str_effs = "test/data-133-144-eff.txt"; str_effs_map = "test/map.txt"
     low_pmt, high_pmt, mid_pmt = 0, 31, 12
     pmt_per_dom = high_pmt - low_pmt
     eff_map, mapdata = read_mapdata(str_effs, str_effs_map, low_pmt, high_pmt)
