@@ -1,7 +1,8 @@
 module load jpp/master
-startdata = 14440
-enddata = 14450
-for i in {1 .. enddata - startdata}
+declare -i startdata=14440
+declare -i enddata=14442
+z=$(( enddata - startdata ))
+for (( i = 0; i <= $z; i++ ))
 do
-    echo "test" 
+    echo $((i + $startdata))
 done
