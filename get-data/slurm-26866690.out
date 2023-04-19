@@ -1,0 +1,18 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Wed Apr 19 15:09:40 CEST 2023
+* Job name:             JRunAnalysis
+* Job id:               26866690
+* User:                 mwang
+* Account:              km3net
+* Submit host:          cca007
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0101
+****************************************************************
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+START
+jra_133_14399.root

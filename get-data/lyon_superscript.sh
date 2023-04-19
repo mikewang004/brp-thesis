@@ -1,7 +1,7 @@
-#!bin/sh
+#!/bin/sh
 #
 #SBATCH --job-name="JRunAnalysis"
-#SBATCH --partition=compute
+#SBATCH --partition=htc
 #SBATCH --time=24:00:00
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
