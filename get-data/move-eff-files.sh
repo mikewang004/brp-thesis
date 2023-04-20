@@ -1,9 +1,41 @@
-module load jpp/master
-declare -i startdata=14399
-declare -i enddata=14422
-z=$(( enddata - startdata ))
-for (( i = $startdata; i <= $enddata; i++ ))
-do
-    cp ../../../../../../sps/km3net/repo/data/calibration/KM3NeT_00000133/v8.0_PMTeff_new/calibration/KM3NeT_00000133_000%i.v8.0_PMTeff_new.ToT.QE.PMTeff.txt ~/pbs/home/m/mwang/zee-symfonie/get-data/KM3NeT_00000133_000%i.v8.0_PMTeff_new.ToT.QE.PMTeff.txt
+#!/bin/bash
+
+# Check for correct number of arguments
+if [ $# -ne 3 ]; then
+  echo "Usage: $0 <start_number> <end_number> <source_folder>"
+  exit 1
+fi
+
+start=$1
+end=$2
+source_folder=$3
+destination_folder="."
+
+# Check if source folder exists
+if [ ! -d "$source_folder" ]; then
+  echo "Error: Source folder '$source_folder' does not exist."
+  exit 1
+fi
+
+# Create destination folder if it doesn't exist
+if [ ! -d "$destination_folder" ]; then
+  mkdir "$destination_folder"
+fi
+
+# Loop through files in source folder
+for file in "$source_folder"/*; do
+  # Extract the filename
+  filename=$(basename "$file")
+
+  # Check if filename contains the integer range and the string "ToT.QE.PMTeff.txt"
+  if [[ $filename == *ToT.QE.PMTeff.txt* ]]; then
+    number=$(echo "$filename" | grep -oE '[0-9]+')
+    if ((number >= start)) && ((number <= end)); then
+      cp "$file" "$destination_folder"
+      echo "Copied '$filename' to '$destination_folder'"
+    fi
+  fi
 done
+
+echo "File copying completed."
 

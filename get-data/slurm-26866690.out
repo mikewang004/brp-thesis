@@ -16,3 +16,14 @@ Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
 ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
 START
 jra_133_14399.root
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Thu Apr 20 01:52:00 CEST 2023
+Job informations can be found using these commands:
+Accounting:
+sacct -j 26866690
+Efficiency:
+seff 26866690
+****************************************************************
