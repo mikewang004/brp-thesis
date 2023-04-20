@@ -70,6 +70,7 @@ class meanhitrate():
     def avg_top_bottom_pmts(self, mid_pmt):
         """Averages over the top (0-11) and bottom (12-31) pmts."""
         self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=1)]
+        print(self.meanhitrate.shape)
         self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 5) #block per DOM 
         self.top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
         self.bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)

@@ -12,6 +12,39 @@ import matplotlib.pyplot as plt
 import scipy.optimize as sp
 import ROOT 
 
+def fit_bin_size(filename):
+    """Corrects for the fact that the y-bin sizes in the ROOT data are exponential.
+    Returns fit parameters for a function y = a*exp(b*x) + c"""
+    binsizes = np.loadtxt(filename)
+    xbins = np.arange(0, len(binsizes[:, 0]))
+    #fit now binsize to some sort of relation 
+    popt, pcov = sp.curve_fit(exp_func, xbins, binsizes[:,1], p0 = [1, 0.1, 0])
+    #plt.scatter(xbins, exp_func(xbins, *popt))
+    return popt, pcov
+    
+
+def get_du_floor_rate(du, floor, hit_data):
+    """Loads in data corresponding to a du and floor."""
+    domstr = "DU%i" %du; floorstr = "F%i" %floor
+    domattr = getattr(hit_data.Detector, domstr)
+    try:
+        floorattr = getattr(domattr, floorstr)
+        domfloordata = floorattr.h_pmt_rate_distributions_Summaryslice
+        return domfloordata
+    except:
+        print(domattr)
+        return None 
+    
+def get_du_floor_data(domfloordata, pmt_per_dom):
+    """Converts rootpy histogram to python-handable data."""
+    domfloorhitrate = np.zeros([pmt_per_dom, 100])
+    for i in range(0, pmt_per_dom):
+        for j in range(0, 100):
+            domfloorhitrate[i, j] = domfloordata.Integral(i, i+1, j, j+1)
+            
+    domfloorhitrate = domfloorhitrate.swapaxes(1, 0)
+    return domfloorhitrate
+
 def gauss(x, a, x0, sigma):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))
 
@@ -64,19 +97,20 @@ class meanhitrate():
     """Everything that has to do with the efficiency/rate arrays"""
     def __init__(self, mean_hit_rate):
         """Remember mean hit rate array has following structure:
-            eff / pmt / du / floor / mean or something"""
+            [runs, data, eff / pmt / du / floor / mean or something]"""
         self.meanhitrate = mean_hit_rate
         
-    def avg_top_bottom_pmts(self, mid_pmt):
+    def avg_top_bottom_pmts(self, mid_pmt = 12):
         """Averages over the top (0-11) and bottom (12-31) pmts."""
-        self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=1)]
-        self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 5) #block per DOM 
-        self.top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
-        self.bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
-        self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
-        self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
-        self.top_length = self.top_avg.shape[0]
-        self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
+        #self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=2)]
+        print(self.meanhitrate.shape)
+        self.meanhitrate = self.meanhitrate.reshape(self.meanhitrate.shape[0], int(self.meanhitrate.shape[1]/31), 31, 5) #block per DOM 
+        #self.top_avg = np.mean(self.meanhitrate[:, :, 0:mid_pmt, :], axis=2)
+        #self.bottom_avg = np.mean(self.meanhitrate[:, :, mid_pmt:31, :], axis=2)
+        #self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
+        #self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
+        #self.top_length = self.top_avg.shape[0]
+        #self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
         return 0;
     
     def plot_top_bottom_pmts(self, fit=True):
@@ -139,7 +173,6 @@ class meanhitrate():
                 j = i; k = k + 1
         return 0;
 
-
 class extract_mean_hit_rate():
 
     def __init__(self, run_numbers, low_pmt, high_pmt, du_eff_map = "map.txt"):
@@ -182,14 +215,41 @@ class extract_mean_hit_rate():
                     mapdata_large = np.zeros([len(self.run_numbers), len(effs[:, 0]), 4])
                     del effs
                 mapdata_large[i, :, :] = mapdata #runs vs length data vs cols containing efficiency / pmt-channel / no du / no floor
+        self.mapdata_large = mapdata_large
         return mapdata_large
+
+    def read_root_data(self):
+        mean_hit_rate = np.zeros([self.mapdata_large.shape[0], self.mapdata_large.shape[1], 5]) # eff / pmt / du / floor / mean or something
+        mean_hit_rate[:, :, 0:4] = np.copy(self.mapdata_large)
+        bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt") #assume bin sizes constant over all runs
+        for l in range(0, len(self.run_numbers)):
+            hit_data = ROOT.TFile.Open(self.path + "jra_133_%i.root" %(self.run_numbers[l]))
+            j = 0
+            ytest = np.arange(0, 100)
+            for i in range(0,int(self.mapdata_large.shape[1]/31)):
+                dufloordata = get_du_floor_rate(int(mean_hit_rate[l, j, 2]), int(mean_hit_rate[l, j, 3]), hit_data)
+                if dufloordata != None:
+                    dufloorhitrate = get_du_floor_data(dufloordata, 31)
+                    for k in range(0, 31):
+                        test = gaussfit(ytest, dufloorhitrate[:, k]) #gets gaussian of hits per rate per pmt 
+                        mean_hit_rate[l, j + k, 4] = exp_func(test.get_mean_coords()[0], *bin_popt) 
+                #to convert bins to real unit as the y-bin size is log
+                else:
+                    mean_hit_rate[j:j+31, 4] = np.nan
+                j = j + 31
+        self.mean_hit_rate = mean_hit_rate
+        print(mean_hit_rate.shape)
+        return mean_hit_rate
+
+
 
 
 def main():
-    run_numbers = np.array([14399, 14400])
+    run_numbers = np.arange(14400, 14406, 1)
     test = extract_mean_hit_rate(run_numbers, 0, 31)
-    test2 = test.analysis_mul_runs()
-    print(test2.shape)
+    test.analysis_mul_runs()
+    test.read_root_data()
+    
 
 if __name__ == "__main__":
     main()
