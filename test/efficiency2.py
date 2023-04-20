@@ -157,6 +157,7 @@ class meanhitrate():
     def filter_data(self, avg_arr):
         """Removes all outliers greater than say 3 sigma from the average"""
         top_mean, top_std = get_mean_std(avg_arr)
+        print(top_mean.shape, top_std.shape, avg_arr.shape)
         topdiff = np.abs(avg_arr - np.tile(top_mean, (avg_arr.shape[0], 1)))
         outliers = np.greater(5*top_std, topdiff)
         avg_arr2 = avg_arr[outliers[:, 0] * outliers[:, 4], :]
