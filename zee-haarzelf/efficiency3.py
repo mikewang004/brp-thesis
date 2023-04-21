@@ -102,13 +102,12 @@ class meanhitrate():
         
     def avg_top_bottom_pmts(self, mid_pmt = 12):
         """Averages over the top (0-11) and bottom (12-31) pmts."""
-        #self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=2)]
-        #print(self.meanhitrate.shape)
-        self.meanhitrate = self.meanhitrate.reshape(self.meanhitrate.shape[0], int(self.meanhitrate.shape[1]/31), 31, 5) #block per DOM 
+        test = self.meanhitrate.shape
+        self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=2)]
+        self.meanhitrate = self.meanhitrate.reshape(test[0], int(test[1]/31), 31, 5) #block per DOM 
         self.top_avg = np.mean(self.meanhitrate[:, :, 0:mid_pmt, :], axis=2)
         self.bottom_avg = np.mean(self.meanhitrate[:, :, mid_pmt:31, :], axis=2)
         self.top_avg = self.filter_data(self.top_avg)
-        print(self.top_avg.shape)
         #self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
         #self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
         #self.top_length = self.top_avg.shape[0]
@@ -178,10 +177,14 @@ class meanhitrate():
     def filter_data(self, avg_arr):
         """Removes all outliers greater than say 3 sigma from the average"""
         top_mean, top_std = get_mean_std(avg_arr)
-        print(top_mean.shape, top_std.shape, avg_arr.shape)
-        topdiff = np.abs(avg_arr - np.tile(top_mean, (avg_arr.shape[0], int(avg_arr.shape[1]/2), 1))) #Note fix this is broken 
-        outliers = np.greater(5*top_std, topdiff)
-        avg_arr2 = avg_arr[outliers[:, :, 0] * outliers[:, :, 4], :]
+        topdiff = np.abs(np.repeat(top_mean[:, np.newaxis, :], avg_arr.shape[1], axis=1) - avg_arr)
+        outliers = np.greater(5*np.repeat(top_std[:, np.newaxis, :], avg_arr.shape[1], axis=1), topdiff)
+        print(outliers.shape)
+        test = (outliers[:, :, 0] * outliers[:, :, 4])
+        print(test.shape)
+        avg_arr2 = avg_arr[test, :]
+        #avg_arr2 = avg_arr[outliers[:, :, 0] * outliers[:, :, 4], :]
+        print(avg_arr.shape, avg_arr2.shape)
         return avg_arr2
 
 class extract_mean_hit_rate():
