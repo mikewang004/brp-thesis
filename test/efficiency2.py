@@ -78,6 +78,7 @@ class meanhitrate():
         self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
         self.top_length = self.top_avg.shape[0]
         self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
+        self.top_avg = self.filter_data(self.top_avg)
         return 0;
     
     def plot_top_bottom_pmts(self, fit=True):
@@ -161,6 +162,7 @@ class meanhitrate():
         topdiff = np.abs(avg_arr - np.tile(top_mean, (avg_arr.shape[0], 1)))
         outliers = np.greater(5*top_std, topdiff)
         avg_arr2 = avg_arr[outliers[:, 0] * outliers[:, 4], :]
+        print(avg_arr2.shape)
         return avg_arr2
     
     

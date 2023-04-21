@@ -2,7 +2,7 @@ import numpy as np
 
 non_valid_runs = np.loadtxt("non-valid-runs.txt", delimiter=",")
 
-runs = np.arange(14399, 14422)
+runs = np.arange(13504, 13560)
 
 mask = np.in1d(runs, non_valid_runs)
 

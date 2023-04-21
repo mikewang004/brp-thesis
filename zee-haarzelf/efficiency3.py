@@ -114,9 +114,9 @@ class meanhitrate():
         #self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
         return 0;
     
-    def plot_top_bottom_pmts(self, fit=True):
-        self.top_avg = self.filter_data(self.top_avg)
-        self.bottom_avg = self.filter_data(self.bottom_avg)
+    def plot_top_bottom_pmts(self, top_avg, bottom_avg, fit=True):
+        top_avg = self.filter_data(top_avg)
+        bottom_avg = self.filter_data(bottom_avg)
         j = 0; k = 0
         if fit == True:
             self.fit_top_bottom_pmts()
@@ -131,18 +131,24 @@ class meanhitrate():
                     plt.plot(xfit, lin_func(xfit, *self.uppopt[k,:]), label="top fit")
                     plt.plot(xfit, lin_func(xfit, *self.lowpopt[k, :]),label="bottom fit")
                     k = k + 1
-                plt.scatter(self.top_avg[j:i, 0], self.top_avg[j:i, 4], label="average of pmts 0-11")
-                plt.scatter(self.bottom_avg[j:i, 0], self.bottom_avg[j:i, 4], label="average of pmts 12-30")
-                plt.scatter(np.mean(self.top_avg[j:i, 0]), np.mean(self.top_avg[j:i, 4]), label="mean point top pmts")
-                plt.scatter(np.mean(self.bottom_avg[j:i, 0]), np.mean(self.bottom_avg[j:i, 4]), label="mean point bottom pmts")
-                plt.title("Rate vs efficiency for du no %i" %(self.top_avg[i, 2]))
+                plt.scatter(top_avg[j:i, 0], top_avg[j:i, 4], label="average of pmts 0-11")
+                plt.scatter(bottom_avg[j:i, 0], bottom_avg[j:i, 4], label="average of pmts 12-30")
+                plt.scatter(np.mean(top_avg[j:i, 0]), np.mean(top_avg[j:i, 4]), label="mean point top pmts")
+                plt.scatter(np.mean(bottom_avg[j:i, 0]), np.mean(bottom_avg[j:i, 4]), label="mean point bottom pmts")
+                plt.title("Rate vs efficiency for du no %i" %(top_avg[i, 2]))
                 plt.ylim(0, 12.5)
                 plt.xlim(0, 1.4)
                 plt.xlabel("Efficiency")
                 plt.ylabel("Rate [kHz]")
                 plt.legend()
                 plt.show()
-                j = i  
+                j = i 
+
+    def threed_plot_top_bottom_pmts(self, fit=True):
+        self.top_avg = self.filter_data(self.top_avg)
+        self.bottom_avg = self.filter_data(self.bottom_avg)
+        for i in range(0, self.top_avg.shape[0]):
+            
                 
     def plot_top_bottom_performance(self):
         k = 0
@@ -161,7 +167,6 @@ class meanhitrate():
     
 
     def fit_top_bottom_pmts(self):
-        print(self.top_avg, self.bottom_avg)
         top_mask = self.top_avg[:-1] == self.top_avg[1:]
         no_dus = top_mask.shape[0] - top_mask[:, 2].sum()
         self.uppopt, self.uppcov = np.zeros([no_dus,2]), np.zeros([no_dus, 2, 2])
@@ -178,13 +183,11 @@ class meanhitrate():
         """Removes all outliers greater than say 3 sigma from the average"""
         top_mean, top_std = get_mean_std(avg_arr)
         topdiff = np.abs(np.repeat(top_mean[:, np.newaxis, :], avg_arr.shape[1], axis=1) - avg_arr)
-        outliers = np.greater(5*np.repeat(top_std[:, np.newaxis, :], avg_arr.shape[1], axis=1), topdiff)
-        print(outliers.shape)
-        test = (outliers[:, :, 0] * outliers[:, :, 4])
-        print(test.shape)
-        avg_arr2 = avg_arr[test, :]
-        #avg_arr2 = avg_arr[outliers[:, :, 0] * outliers[:, :, 4], :]
-        print(avg_arr.shape, avg_arr2.shape)
+        outliers = np.greater(np.repeat(5*top_std[:, np.newaxis, :], avg_arr.shape[1], axis=1), topdiff)
+        avg_arr2 = avg_arr
+        #test = (outliers[:, :, 0] * outliers[:, :, 4])
+        for i in range(0, avg_arr.shape[0]): #TODO fix for-loop here 
+            avg_arr2[i, :, :] = avg_arr[i, outliers[i, :, 0]]
         return avg_arr2
 
 class extract_mean_hit_rate():
