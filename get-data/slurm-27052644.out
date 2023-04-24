@@ -1,0 +1,703 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Fri Apr 21 17:04:40 CEST 2023
+* Job name:             JRunAnalysis
+* Job id:               27052644
+* User:                 mwang
+* Account:              km3net
+* Submit host:          cca003
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0101
+****************************************************************
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13504.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13505.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13506.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13507.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13508.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13509.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13510.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13511.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13512.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13513.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13514.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13515.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13516.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13517.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13518.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13519.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13520.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13521.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Socket error
+START
+jra_133_13522.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13523.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13524.root
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13525.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13526.root
+Error in <TNetXNGFile::Open>: [ERROR] Socket error
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13527.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Socket error
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+START
+jra_133_13528.root
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3005] Too many attempts to stage read access to the file
+
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+START
+jra_133_13529.root
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Operation expired
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+Error in <TNetXNGFile::Open>: [ERROR] Server responded with an error: [3010] fetch failed
+
+slurmstepd: error: *** JOB 27052644 ON ccwslurm0101 CANCELLED AT 2023-04-22T17:05:06 DUE TO TIME LIMIT ***
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Sat Apr 22 17:05:06 CEST 2023
+Job informations can be found using these commands:
+Accounting:
+sacct -j 27052644
+Efficiency:
+seff 27052644
+****************************************************************
