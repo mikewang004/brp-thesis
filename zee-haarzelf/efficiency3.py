@@ -156,8 +156,8 @@ class meanhitrate():
                 for l in range(0, self.top_avg.shape[0]):
                     #plt.scatter(np.mean(self.top_avg[l, j:i, 0]), np.mean(self.top_avg[l, j:i, 4]), label="mean point top pmts")
                     #plt.scatter(np.mean(self.bottom_avg[l, j:i, 0]), np.mean(self.bottom_avg[l, j:i, 4]), label="mean point bottom pmts")
-                    plt.scatter(4*l, np.mean(self.top_avg[l, j:i, 0]), color="orange") #top pmts
-                    plt.scatter(4*l, np.mean(self.bottom_avg[l, j:i, 0]), color="blue") #bottom pmt
+                    plt.scatter(3*l, np.mean(self.top_avg[l, j:i, 4]), color="orange") #top pmts
+                    plt.scatter(3*l, np.mean(self.bottom_avg[l, j:i, 4]), color="blue") #bottom pmt
                 j = i
                 k = k + 1
                 #plt.ylim(0, 12.5)
@@ -165,11 +165,11 @@ class meanhitrate():
                 #plt.title("Rate vs efficiency for du no %i" %(self.top_avg[0, i, 2]))
                 #plt.xlabel("Efficiency")
                 #plt.ylabel("Rate [kHz]")
-                #plt.title("Efficiency as function of time for du no. %i" %(self.top_avg[0, i, 2]))
-        plt.xlabel("hours since start")
-        plt.ylabel("efficiency")
-        plt.legend()
-        plt.show()
+                plt.title("Efficiency as function of time for du no. %i" %(self.top_avg[0, i, 2]))
+                plt.xlabel("hours since start")
+                plt.ylabel("efficiency")
+                plt.legend()
+                plt.show()
 
         print(k) 
             
@@ -286,7 +286,7 @@ class extract_mean_hit_rate():
 
 
 def main():
-    run_numbers = np.arange(14413,14423, 1)
+    run_numbers = np.arange(14413,14440, 1)
     test = extract_mean_hit_rate(run_numbers, 0, 31)
     test.analysis_mul_runs()
     
