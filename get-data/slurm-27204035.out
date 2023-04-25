@@ -249,3 +249,38 @@ Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
 ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
 START
 jra_133_14456.root
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+START
+jra_133_14457.root
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+START
+jra_133_14458.root
+read events
+read summarydata
+read timeslices
+Warning in <TClassTable::Add>: class JLANG::JUUID already in TClassTable
+ANALYSIS OF ALL AVAILABLE PMTs INFORMATION. It may take a while!
+START
+jra_133_14459.root
+read events
+read summarydata
+read timeslices
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Tue Apr 25 13:42:34 CEST 2023
+Job informations can be found using these commands:
+Accounting:
+sacct -j 27204035
+Efficiency:
+seff 27204035
+****************************************************************
