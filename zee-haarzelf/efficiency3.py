@@ -172,29 +172,23 @@ class meanhitrate():
                 plt.show()
 
         print(k) 
-        
-    def second_multi_d_plot_top_bottom_pmt(self, fit=True):
+        return 0;
+    
+    def multi_d_plot_top_bottom_pmt_2(self, fit=True):
         self.top_avg = self.filter_data(self.top_avg)
         self.bottom_avg = self.filter_data(self.bottom_avg)
         #for i in range(0, self.top_avg.shape[0]):
         #    self.plot_top_bottom_pmts(self.top_avg[i, :, :], self.bottom_avg[i, :, :])
         top_mask = self.top_avg[:, :-1, :] == self.top_avg[:, 1:, :]
         k = 0; j = 0
-        timearr = np.linspace(0, 3*self.top_avg.shape[0], 100)
-        print(self.top_avg.shape)
         for i in range(0, self.top_avg.shape[1]-1):
-            print(top_mask[0,i,2])
             if top_mask[0,i,2] == False: #assume composition of du does not change over time 
-            #print(np.mean(self.top_avg[:, j:i, 0], axis=1), np.mean(self.top_avg[:, j:i, 4], axis=1))
-                print(self.top_avg[:, j:i, 0].shape) #TODO fix this 
-                #top_avg_mean = np.mean(self.top_avg[:, j:i, 0], axis=1)
-                #bottom_avg_mean = np.mean(self.bottom_avg[:, j:i, 0], axis =1)
-                #for l in range(0, self.top_avg.shape[0]):
+                #print(np.mean(self.top_avg[:, j:i, 0], axis=1), np.mean(self.top_avg[:, j:i, 4], axis=1))
+                for l in range(0, self.top_avg.shape[0]):
                     #plt.scatter(np.mean(self.top_avg[l, j:i, 0]), np.mean(self.top_avg[l, j:i, 4]), label="mean point top pmts")
                     #plt.scatter(np.mean(self.bottom_avg[l, j:i, 0]), np.mean(self.bottom_avg[l, j:i, 4]), label="mean point bottom pmts")
-                    #plt.scatter(3*l, np.mean(self.top_avg[l, j:i, 0]), color="orange") #top pmts
-                    #plt.scatter(3*l, np.mean(self.bottom_avg[l, j:i, 0]), color="blue") #bottom pmt
-                plt.scatter(timearr, top_avg_mean)
+                    plt.scatter(3*l, np.mean(self.top_avg[l, j:i, 4]), color="orange") #top pmts
+                    plt.scatter(3*l, np.mean(self.bottom_avg[l, j:i, 4]), color="blue") #bottom pmt
                 j = i
                 k = k + 1
                 #plt.ylim(0, 12.5)
@@ -208,8 +202,8 @@ class meanhitrate():
                 plt.legend()
                 plt.show()
 
-            print(k) 
-            return 0;
+        print(k) 
+        return 0;
             
                 
     def plot_top_bottom_performance(self):
@@ -330,7 +324,7 @@ def main():
     
     test2 = meanhitrate(test.read_root_data())
     test2.avg_top_bottom_pmts()
-    test2.second_multi_d_plot_top_bottom_pmt()
+    test2.multi_d_plot_top_bottom_pmt_2()
     
 
 if __name__ == "__main__":
