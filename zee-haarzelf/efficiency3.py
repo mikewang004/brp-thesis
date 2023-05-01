@@ -202,7 +202,34 @@ class meanhitrate():
         print(total_du_data)
         print(total_du_data.shape)
         return total_du_data
-    
+
+    def performance_per_floor(self, floor_group):
+        """floor_group np array or list detailling which numbers are the edges of a group.
+        Note output as follows [top/bottom pmts, floor group, data, eff / pmt/ du / floor / mean]"""
+        self.top_avg = self.filter_data(self.top_avg) #this is already averaged per pmt 
+        self.bottom_avg = self.filter_data(self.bottom_avg)
+        top_mask = np.isin(self.top_avg[:, :, 3], floor_group)
+        #top_dom_du_data = np.zeros([])
+        #print(self.top_avg.shape)
+        #print(self.top_avg)
+        #Average and rearrange data in [n] floor blocks 
+        top_floor_blocks_avg = np.zeros([self.top_avg.shape[0], len(floor_group)+1, int(top_mask[0,:].sum()/len(floor_group)+1), self.top_avg.shape[2]])
+        print(top_floor_blocks_avg.shape)
+        j = 0; k = 0; l = 0 #top du data structure [data; time; eff / pmt etc]
+        for i in range(0, self.top_avg.shape[1]-1):
+            if top_mask[0, i] == True:
+                print(self.top_avg[0, j:i+1, :])
+                print(" ")
+                top_floor_blocks_avg[:, k, l, :] = np.mean(self.top_avg[:, j:i+1, :], axis = 1)
+                j = i + 1
+                if k >= 2:
+                    k = 0
+                    l = l + 1
+                else:
+                    k = k + 1
+        print(l)
+        print(top_floor_blocks_avg) #TODO check why arrays do not align 
+        
     def time_plot_top_bottom_pmt(self):
         pmt_no = 0 #0 for top, 1 for bottom 
         eff_or_rate = 4 #0 for efficiencies, 4 for rates 
@@ -222,6 +249,28 @@ class meanhitrate():
         #fig = px.imshow(heatmap, text_auto=True, aspect="auto")
         fig.show()
         return 0;
+
+    def string_plot_top_bottom_pmt(self):
+        pmt_no = 0 #0 for top, 1 for bottom 
+        eff_or_rate = 4 #0 for efficiencies, 4 for rates 
+        """Try 2d heat map with x time y string number z efficiency"""
+        total_du_data = self.performance_per_floor([6, 12, 18]) #groups floors no. 0-6; 7-12; 13-18
+        print(total_du_data[0, ...])
+        print(total_du_data.shape)
+        heatmap = np.zeros([total_du_data.shape[2], total_du_data.shape[1]])
+        for i in range(0, total_du_data.shape[2]):
+            heatmap[i, :] = total_du_data[pmt_no, :, i, eff_or_rate]
+        #print(heatmap.shape)
+        #heatmap = np.swapaxes(heatmap, 0, 1)
+        #timearr = np.linspace(0, 3*((total_du_data.shape[2])-1), num = (total_du_data.shape[2]))
+        #print("Initialising plot")
+        #fig = px.imshow(heatmap, labels=dict(x="time since start (h)", y="string number", color="rate [kHz]"), 
+        #                x = timearr, y=total_du_data[pmt_no, :, i, 2], text_auto=True,
+        #                title = "Rates of DUs as function of time for pmts 1-11")
+        #fig = px.imshow(heatmap, text_auto=True, aspect="auto")
+        #fig.show()
+        return 0;
+
         
             
                 
@@ -312,6 +361,7 @@ class extract_mean_hit_rate():
 
     def read_root_data(self):
         mean_hit_rate = np.zeros([self.mapdata_large.shape[0], self.mapdata_large.shape[1], 5]) # eff / pmt / du / floor / mean or something
+        #mean_hit_rate.astype(np.float32)
         mean_hit_rate[:, :, 0:4] = np.copy(self.mapdata_large)
         bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt") #assume bin sizes constant over all runs
         for l in range(0, len(self.run_numbers)):
@@ -337,13 +387,14 @@ class extract_mean_hit_rate():
 
 
 def main():
-    run_numbers = np.arange(14413,14440, 1)
+    #run_numbers = np.arange(14413,14440, 1)
+    run_numbers = np.arange(14413, 14415, 1)
     test = extract_mean_hit_rate(run_numbers, 0, 31)
     test.analysis_mul_runs()
     
     test2 = meanhitrate(test.read_root_data())
     test2.avg_top_bottom_pmts()
-    test2.time_plot_top_bottom_pmt()
+    test2.string_plot_top_bottom_pmt()
     
 
 if __name__ == "__main__":
