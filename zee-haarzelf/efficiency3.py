@@ -199,8 +199,6 @@ class meanhitrate():
         total_du_data = np.zeros([2, len(top_mask[0,:,2]) - top_mask[0,:,2].sum(), self.top_avg.shape[0], self.top_avg.shape[2]])
         total_du_data[0, ...] = top_du_data
         total_du_data[1, ...] = bottom_du_data
-        print(total_du_data)
-        print(total_du_data.shape)
         return total_du_data
 
     def performance_per_floor(self, floor_group):
@@ -214,25 +212,23 @@ class meanhitrate():
         #print(self.top_avg)
         #Average and rearrange data in [n] floor blocks; array shape time/floor group / data divided by floor groups/ headers
         top_floor_blocks_avg = np.zeros([self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
-        print(top_floor_blocks_avg.shape)
+        bottom_floor_blocks_avg = np.zeros([self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
         j = 0; k = 0; l = 0 #top du data structure [data; time; eff / pmt etc]
         for i in range(0, self.top_avg.shape[1]):
             if top_mask[0, i] == True:
-                #print(self.top_avg[:, j:i+1, :])
-                #print(np.mean(self.top_avg[:, j:i+1, :],axis=1))
-                print(" ")
                 top_floor_blocks_avg[:, k, l, :] = np.mean(self.top_avg[:, j:i+1, :], axis = 1)
+                bottom_floor_blocks_avg[:, k, l, :] = np.mean(self.bottom_avg[:, j:i+1, :], axis = 1)
                 j = i + 1
                 if k >= 2:
                     k = 0
                     l = l + 1
                 else:
                     k = k + 1
-        print(l)
-        print(top_floor_blocks_avg)
-        #total_du_floor_blocks_data = np.zeros([2, self.top_avg.shape[0], len(floor_group)+1, int(top_mask[0,:].sum()/len(floor_group)+1), self.top_avg.shape[2]])
-        #total_du_floor_blocks_data[0, ...] = top_floor_blocks_avg
-        #total_du_floor_blocks_data[1, ...] = bottom_floor_blocks_avg
+        total_du_floor_blocks_data = np.zeros([2, self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
+        total_du_floor_blocks_data[0, ...] = top_floor_blocks_avg
+        total_du_floor_blocks_data[1, ...] = bottom_floor_blocks_avg
+        print(total_du_floor_blocks_data[0, ...])
+        return total_du_floor_blocks_data
         
     def time_plot_top_bottom_pmt(self):
         pmt_no = 0 #0 for top, 1 for bottom 
@@ -243,7 +239,6 @@ class meanhitrate():
         heatmap = np.zeros([total_du_data.shape[2], total_du_data.shape[1]])
         for i in range(0, total_du_data.shape[2]):
             heatmap[i, :] = total_du_data[pmt_no, :, i, eff_or_rate]
-        print(heatmap.shape)
         heatmap = np.swapaxes(heatmap, 0, 1)
         timearr = np.linspace(0, 3*((total_du_data.shape[2])-1), num = (total_du_data.shape[2]))
         print("Initialising plot")
@@ -255,25 +250,30 @@ class meanhitrate():
         return 0;
 
     def string_plot_top_bottom_pmt(self):
-        pmt_no = 0 #0 for top, 1 for bottom 
+        pmt_no = 1 #0 for top, 1 for bottom 
         eff_or_rate = 4 #0 for efficiencies, 4 for rates 
+        if pmt_no == 0:
+            pmt_no_str = "PMTs 0-11."
+        else:
+            pmt_no_str = "PMTs 12-30."
         """Try 2d heat map with x time y string number z efficiency"""
         total_du_data = self.performance_per_floor([6, 12, 18]) #groups floors no. 0-6; 7-12; 13-18
-        #print(total_du_data[0, ...])
-        print(total_du_data.shape)
+        #Normalise over time 
+        total_du_data = np.mean(total_du_data, axis=1)
+        #print(total_du_data)
         heatmap = np.zeros([total_du_data.shape[2], total_du_data.shape[1]])
         for i in range(0, total_du_data.shape[2]):
             heatmap[i, :] = total_du_data[pmt_no, :, i, eff_or_rate]
-        print(heatmap)
-        print(heatmap.shape)
-        #heatmap = np.swapaxes(heatmap, 0, 1)
-        #timearr = np.linspace(0, 3*((total_du_data.shape[2])-1), num = (total_du_data.shape[2]))
-        #print("Initialising plot")
-        #fig = px.imshow(heatmap, labels=dict(x="time since start (h)", y="string number", color="rate [kHz]"), 
-        #                x = timearr, y=total_du_data[pmt_no, :, i, 2], text_auto=True,
-        #                title = "Rates of DUs as function of time for pmts 1-11")
-        #fig = px.imshow(heatmap, text_auto=True, aspect="auto")
-        #fig.show()
+        heatmap = np.swapaxes(heatmap, 0, 1)
+        print("Initialising plot")
+        fig = px.imshow(heatmap, labels=dict(x="DU number",y="floor group", color="rate [kHz]"), 
+                        x= total_du_data[pmt_no, 0, :, 2],y=['0-6', '7-12', '13-18'],
+                        title = "Rates of DUs seperated by DOM performance per floor group, %s" %pmt_no_str, 
+                        text_auto=True, aspect="auto", range_color= [2, 9])
+        if pmt_no == 0:
+            fig.write_image("top-rate-string-floor-group.pdf")
+        else:
+            fig.write_image("bottom-rate-string-floor-group.pdf")
         return 0;
 
         
