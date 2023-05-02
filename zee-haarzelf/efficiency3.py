@@ -270,6 +270,8 @@ class meanhitrate():
                         x= total_du_data[pmt_no, 0, :, 2],y=['0-6', '7-12', '13-18'],
                         title = "Rates of DUs seperated by DOM performance per floor group, %s" %pmt_no_str, 
                         text_auto=True, aspect="auto", range_color= [2, 9])
+        print(np.mean(heatmap, axis=1))
+        print(np.std(heatmap, axis=1))
         if pmt_no == 0:
             fig.write_image("top-rate-string-floor-group.pdf")
         else:
@@ -392,8 +394,8 @@ class extract_mean_hit_rate():
 
 
 def main():
-    #run_numbers = np.arange(14413,14440, 1)
-    run_numbers = np.arange(14413, 14415, 1)
+    run_numbers = np.arange(14413,14440, 1)
+    #run_numbers = np.arange(14413, 14415, 1)
     test = extract_mean_hit_rate(run_numbers, 0, 31)
     test.analysis_mul_runs()
     
