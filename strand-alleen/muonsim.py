@@ -26,6 +26,7 @@ struct residual_map
         {
             string nam = "res"+str(dom_id)+"_"+str(channel_id);
             h = new TH1D(nam.c_str(),nam.c_str(), 200,-50,150);
+            h->SetDirectory(0);
         }
         return h;  
     }
