@@ -11,6 +11,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as sp
 import ROOT 
+import plotly.io as pio
+import plotly.express as px
+
+pio.renderers.default='browser'
 
 def fit_bin_size(filename):
     """Corrects for the fact that the y-bin sizes in the ROOT data are exponential.
@@ -174,36 +178,107 @@ class meanhitrate():
         print(k) 
         return 0;
     
-    def multi_d_plot_top_bottom_pmt_2(self, fit=True):
-        self.top_avg = self.filter_data(self.top_avg)
+    def performance_per_du(self, fit=True):
+        """Note top_avg 0th column refers to efficiency; 4th column to rate [khz]"""
+        self.top_avg = self.filter_data(self.top_avg) #this is already averaged per pmt 
         self.bottom_avg = self.filter_data(self.bottom_avg)
-        #for i in range(0, self.top_avg.shape[0]):
-        #    self.plot_top_bottom_pmts(self.top_avg[i, :, :], self.bottom_avg[i, :, :])
-        top_mask = self.top_avg[:, :-1, :] == self.top_avg[:, 1:, :]
-        k = 0; j = 0
-        for i in range(0, self.top_avg.shape[1]-1):
+        top_mask = self.top_avg[:, :-1, :] == self.top_avg[:, 1:, :] #detect change in pmt/du/string 
+        j = 0; k = 0 #top du data structure [data; time; eff / pmt etc]
+        top_du_data = np.zeros([len(top_mask[0,:,2]) - top_mask[0,:,2].sum(), self.top_avg.shape[0], self.top_avg.shape[2]])
+        bottom_du_data = np.zeros([len(top_mask[0,:,2]) - top_mask[0,:,2].sum(), self.top_avg.shape[0], self.top_avg.shape[2]])
+        print(top_du_data.shape)
+        #Get mean per string 
+        for i in range(0, self.top_avg.shape[1]-1): 
             if top_mask[0,i,2] == False: #assume composition of du does not change over time 
-                #print(np.mean(self.top_avg[:, j:i, 0], axis=1), np.mean(self.top_avg[:, j:i, 4], axis=1))
-                for l in range(0, self.top_avg.shape[0]):
-                    #plt.scatter(np.mean(self.top_avg[l, j:i, 0]), np.mean(self.top_avg[l, j:i, 4]), label="mean point top pmts")
-                    #plt.scatter(np.mean(self.bottom_avg[l, j:i, 0]), np.mean(self.bottom_avg[l, j:i, 4]), label="mean point bottom pmts")
-                    plt.scatter(3*l, np.mean(self.top_avg[l, j:i, 4]), color="orange") #top pmts
-                    plt.scatter(3*l, np.mean(self.bottom_avg[l, j:i, 4]), color="blue") #bottom pmt
-                j = i
-                k = k + 1
-                #plt.ylim(0, 12.5)
-                #plt.xlim(0, 1.4)
-                #plt.title("Rate vs efficiency for du no %i" %(self.top_avg[0, i, 2]))
-                #plt.xlabel("Efficiency")
-                #plt.ylabel("Rate [kHz]")
-                plt.title("Efficiency as function of time for du no. %i" %(self.top_avg[0, i, 2]))
-                plt.xlabel("hours since start")
-                plt.ylabel("efficiency")
-                plt.legend()
-                plt.show()
+                #du_top_data = (np.mean(self.top_avg[:, j:i, :], axis = 1))
+                #du_bottom_data = np.mean(self.bottom_avg[:, j:i, :], axis=1)
+                top_du_data[k, :, :] = np.mean(self.top_avg[:, j:i, :], axis = 1)
+                bottom_du_data[k, :, :] = np.mean(self.bottom_avg[:, j:i, :], axis=1)
+                j = i+1; k = k+1
+        #Organise mean per string in one array; note structure is [top/bottom; data; time dep; eff/pmt etc] i.e [2, [x], time, 5]
+        total_du_data = np.zeros([2, len(top_mask[0,:,2]) - top_mask[0,:,2].sum(), self.top_avg.shape[0], self.top_avg.shape[2]])
+        total_du_data[0, ...] = top_du_data
+        total_du_data[1, ...] = bottom_du_data
+        return total_du_data
 
-        print(k) 
+    def performance_per_floor(self, floor_group):
+        """floor_group np array or list detailling which numbers are the edges of a group.
+        Note output as follows [top/bottom pmts, floor group, data, eff / pmt/ du / floor / mean]"""
+        self.top_avg = self.filter_data(self.top_avg) #this is already averaged per pmt 
+        self.bottom_avg = self.filter_data(self.bottom_avg)
+        top_mask = np.isin(self.top_avg[:, :, 3], floor_group)
+        #top_dom_du_data = np.zeros([])
+        #print(self.top_avg.shape)
+        #print(self.top_avg)
+        #Average and rearrange data in [n] floor blocks; array shape time/floor group / data divided by floor groups/ headers
+        top_floor_blocks_avg = np.zeros([self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
+        bottom_floor_blocks_avg = np.zeros([self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
+        j = 0; k = 0; l = 0 #top du data structure [data; time; eff / pmt etc]
+        for i in range(0, self.top_avg.shape[1]):
+            if top_mask[0, i] == True:
+                top_floor_blocks_avg[:, k, l, :] = np.mean(self.top_avg[:, j:i+1, :], axis = 1)
+                bottom_floor_blocks_avg[:, k, l, :] = np.mean(self.bottom_avg[:, j:i+1, :], axis = 1)
+                j = i + 1
+                if k >= 2:
+                    k = 0
+                    l = l + 1
+                else:
+                    k = k + 1
+        total_du_floor_blocks_data = np.zeros([2, self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
+        total_du_floor_blocks_data[0, ...] = top_floor_blocks_avg
+        total_du_floor_blocks_data[1, ...] = bottom_floor_blocks_avg
+        print(total_du_floor_blocks_data[0, ...])
+        return total_du_floor_blocks_data
+        
+    def time_plot_top_bottom_pmt(self):
+        pmt_no = 0 #0 for top, 1 for bottom 
+        eff_or_rate = 4 #0 for efficiencies, 4 for rates 
+        """Try 2d heat map with x time y string number z efficiency"""
+        total_du_data = self.performance_per_du()
+        #Reshape array to prepare for heat map
+        heatmap = np.zeros([total_du_data.shape[2], total_du_data.shape[1]])
+        for i in range(0, total_du_data.shape[2]):
+            heatmap[i, :] = total_du_data[pmt_no, :, i, eff_or_rate]
+        heatmap = np.swapaxes(heatmap, 0, 1)
+        timearr = np.linspace(0, 3*((total_du_data.shape[2])-1), num = (total_du_data.shape[2]))
+        print("Initialising plot")
+        fig = px.imshow(heatmap, labels=dict(x="time since start (h)", y="string number", color="rate [kHz]"), 
+                        x = timearr, y=total_du_data[pmt_no, :, i, 2], text_auto=True,
+                        title = "Rates of DUs as function of time for pmts 1-11")
+        #fig = px.imshow(heatmap, text_auto=True, aspect="auto")
+        fig.show()
         return 0;
+
+    def string_plot_top_bottom_pmt(self):
+        pmt_no = 1 #0 for top, 1 for bottom 
+        eff_or_rate = 4 #0 for efficiencies, 4 for rates 
+        if pmt_no == 0:
+            pmt_no_str = "PMTs 0-11."
+        else:
+            pmt_no_str = "PMTs 12-30."
+        """Try 2d heat map with x time y string number z efficiency"""
+        total_du_data = self.performance_per_floor([6, 12, 18]) #groups floors no. 0-6; 7-12; 13-18
+        #Normalise over time 
+        total_du_data = np.mean(total_du_data, axis=1)
+        #print(total_du_data)
+        heatmap = np.zeros([total_du_data.shape[2], total_du_data.shape[1]])
+        for i in range(0, total_du_data.shape[2]):
+            heatmap[i, :] = total_du_data[pmt_no, :, i, eff_or_rate]
+        heatmap = np.swapaxes(heatmap, 0, 1)
+        print("Initialising plot")
+        fig = px.imshow(heatmap, labels=dict(x="DU number",y="floor group", color="rate [kHz]"), 
+                        x= total_du_data[pmt_no, 0, :, 2],y=['0-6', '7-12', '13-18'],
+                        title = "Rates of DUs seperated by DOM performance per floor group, %s" %pmt_no_str, 
+                        text_auto=True, aspect="auto", range_color= [2, 9])
+        print(np.mean(heatmap, axis=1))
+        print(np.std(heatmap, axis=1))
+        if pmt_no == 0:
+            fig.write_image("top-rate-string-floor-group.pdf")
+        else:
+            fig.write_image("bottom-rate-string-floor-group.pdf")
+        return 0;
+
+        
             
                 
     def plot_top_bottom_performance(self):
@@ -293,6 +368,7 @@ class extract_mean_hit_rate():
 
     def read_root_data(self):
         mean_hit_rate = np.zeros([self.mapdata_large.shape[0], self.mapdata_large.shape[1], 5]) # eff / pmt / du / floor / mean or something
+        #mean_hit_rate.astype(np.float32)
         mean_hit_rate[:, :, 0:4] = np.copy(self.mapdata_large)
         bin_popt, bin_pcov = fit_bin_size("y-bin_size.txt") #assume bin sizes constant over all runs
         for l in range(0, len(self.run_numbers)):
@@ -318,13 +394,14 @@ class extract_mean_hit_rate():
 
 
 def main():
-    run_numbers = np.arange(14413,14415, 1)
+    run_numbers = np.arange(14413,14440, 1)
+    #run_numbers = np.arange(14413, 14415, 1)
     test = extract_mean_hit_rate(run_numbers, 0, 31)
     test.analysis_mul_runs()
     
     test2 = meanhitrate(test.read_root_data())
     test2.avg_top_bottom_pmts()
-    test2.multi_d_plot_top_bottom_pmt_2()
+    test2.string_plot_top_bottom_pmt()
     
 
 if __name__ == "__main__":
