@@ -203,7 +203,7 @@ class meanhitrate():
 
     def performance_per_floor(self, floor_group):
         """floor_group np array or list detailling which numbers are the edges of a group.
-        Note output as follows [top/bottom pmts, floor group, data, eff / pmt/ du / floor / mean]"""
+        Note output as follows [top/bottom pmts, time, floor group, data, eff / pmt/ du / floor / mean]"""
         self.top_avg = self.filter_data(self.top_avg) #this is already averaged per pmt 
         self.bottom_avg = self.filter_data(self.bottom_avg)
         top_mask = np.isin(self.top_avg[:, :, 3], floor_group)
@@ -227,7 +227,6 @@ class meanhitrate():
         total_du_floor_blocks_data = np.zeros([2, self.top_avg.shape[0], len(floor_group), int(top_mask[0,:].sum()/len(floor_group)), self.top_avg.shape[2]])
         total_du_floor_blocks_data[0, ...] = top_floor_blocks_avg
         total_du_floor_blocks_data[1, ...] = bottom_floor_blocks_avg
-        print(total_du_floor_blocks_data[0, ...])
         return total_du_floor_blocks_data
         
     def time_plot_top_bottom_pmt(self):
@@ -249,7 +248,7 @@ class meanhitrate():
         fig.show()
         return 0;
 
-    def string_plot_top_bottom_pmt(self):
+    def string_plot_top_bottom_pmt_static(self):
         pmt_no = 1 #0 for top, 1 for bottom 
         eff_or_rate = 4 #0 for efficiencies, 4 for rates 
         if pmt_no == 0:
@@ -278,9 +277,62 @@ class meanhitrate():
             fig.write_image("bottom-rate-string-floor-group.pdf")
         return 0;
 
+    def string_plot_top_bottom_pmt(self):
+        pmt_no = 0 #0 for top, 1 for bottom 
+        eff_or_rate = 4 #0 for efficiencies, 4 for rates 
+        if pmt_no == 0:
+            pmt_no_str = "PMTs 0-11."
+        else:
+            pmt_no_str = "PMTs 12-30."
+        """Try 2d heat map with x time y string number z efficiency"""
+        total_du_data = self.performance_per_floor([6, 12, 18]) #groups floors no. 0-6; 7-12; 13-18
+        #Normalise over group
+        total_du_data = np.mean(total_du_data, axis=3)
+        heatmap = np.zeros([total_du_data.shape[0], total_du_data.shape[2], total_du_data.shape[1]])
+        for i in range(0, total_du_data.shape[2]):
+            heatmap[:, i, :] = total_du_data[:, :, i, eff_or_rate]
+        #heatmap = np.swapaxes(heatmap, 0, 1) 
+        heatmap = np.flip(heatmap, axis=1) #put higher number doms to the top
+        print(heatmap)
+        print("Initialising plot")
+        timearr = np.linspace(0, 3*((total_du_data.shape[1])-1), num = (total_du_data.shape[1]))
+        print(timearr)
+        for i in range(0, 2):
+            if i == 0:
+                pmt_no_str = "PMTs 0-11."
+            else:
+                pmt_no_str = "PMTs 12-30."
+            fig = px.imshow(heatmap[i, ...], labels=dict(x="time since start in hours",y="floor group", color="rate [kHz]"), 
+                            x= timearr,y=['13-18', '7-12', '1-6'],
+                            title = "Rates of DUs seperated by floor group performance, %s" %pmt_no_str, 
+                            text_auto=True, aspect="auto", range_color= [4, 6], width=1980, height=1080)
+            if i == 0:
+                fig.write_image("top-time-rate-string-floor-group.pdf")
+            else:
+                fig.write_image("bottom-time-rate-string-floor-group.pdf")
+        return heatmap; #heatmap structure [top/bottom pmts, floor group/time]
+
         
-            
-                
+    def string_plot_top_bottom_pmt_rate_change(self, heatmap):
+        print(heatmap.shape)
+        heatmap_change = np.diff(heatmap, axis=2)
+        print(heatmap_change.shape)
+        timearr = np.arange(3, 3*(heatmap.shape[2]), 3)
+        print(timearr)
+        for i in range(0, 2):
+            if i == 0:
+                pmt_no_str = "PMTs 0-11."
+            else:
+                pmt_no_str = "PMTs 12-30."
+            fig = px.imshow(heatmap_change[i, ...], labels=dict(x="time since start in hours",y="floor group", color="rate [kHz]"), 
+                            x= timearr,y=['13-18', '7-12', '1-6'],
+                            title = "Difference between rates of DUs seperated by floor group performance, %s" %pmt_no_str, 
+                            text_auto=True, aspect="auto", range_color= [0, 0.02], width=1980, height=1080)
+            if i == 0:
+                fig.write_image("top-diff-time-rate-string-floor-group.pdf")
+            else:
+                fig.write_image("bottom-diff-time-rate-string-floor-group.pdf")
+
     def plot_top_bottom_performance(self):
         k = 0
         plt.title("Performance of various DUs")
@@ -395,14 +447,14 @@ class extract_mean_hit_rate():
 
 def main():
     run_numbers = np.arange(14413,14440, 1)
-    #run_numbers = np.arange(14413, 14415, 1)
+    #run_numbers = np.arange(14413, 14416, 1)
     test = extract_mean_hit_rate(run_numbers, 0, 31)
     test.analysis_mul_runs()
     
     test2 = meanhitrate(test.read_root_data())
     test2.avg_top_bottom_pmts()
-    test2.string_plot_top_bottom_pmt()
-    
+    heatmap = test2.string_plot_top_bottom_pmt()
+    test2.string_plot_top_bottom_pmt_rate_change(heatmap)
 
 if __name__ == "__main__":
     main()
