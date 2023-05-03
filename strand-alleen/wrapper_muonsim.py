@@ -49,6 +49,5 @@ print()
 
 # plot the resduals for channel 1 of some DOM
 rmap.geth( 819047388, 1).Draw()
-rmap.geth(819047388, 1).SaveAs("test.root")
 print(rmap.geth( 819047388, 1).GetNbinsX())
-print(rmap.geth( 819047388, 1).Integral(-1000, 1000))
+print(rmap.geth( 819047388, 1).Integral(-50, 60))

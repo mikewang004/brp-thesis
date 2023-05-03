@@ -25,7 +25,7 @@ struct residual_map
         if (!h) 
         {
             string nam = "res"+str(dom_id)+"_"+str(channel_id);
-            h = new TH1D(nam.c_str(),nam.c_str(), 200,-50,150);
+            h = new TH1D(nam.c_str(),nam.c_str(), 200,-50,150); // TH1D (const char *name, const char *title, Int_t nbinsx, Double_t xlow, Double_t xup)
             h->SetDirectory(0);
         }
         return h;  
@@ -48,6 +48,7 @@ struct residual_map
     {
         return keys( M );
     }
+    
 };
 """)
 
