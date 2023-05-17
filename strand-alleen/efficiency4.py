@@ -25,7 +25,7 @@ class map_hit_data():
         self.modid_map = modid_map
 
     def mod_id_to_floor_string(self):
-        """Note output is of the form: no mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]"""
+        """Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]"""
         floor_str_hit = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         mapping = dict(zip(self.modid_map[:,0], range(len(modid_map))))
         for i in range(0, self.muon_hit_data.shape[1]):
@@ -63,12 +63,22 @@ class map_hit_data():
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         str_list, floor_list = np.unique(pmt_group_mean[:, 0, 0]), np.unique(pmt_group_mean[:, 0, 1])
-        heatmap = np.zeros([len(floor_list), len(str_list)])
+        heatmap = np.zeros([len(floor_list), len(str_list)]) #0th dimension floors 1th dimension strings 
         #Sort pmt_groups on str and floor
         print(pmt_group_mean[0, ...])
+        print("test")
+        print(pmt_group_mean.shape)
+        #print(pmt_group_mean)
+        #pmt_group_mean = pmt_group_mean[pmt_group_mean[:, :, 1].argsort()]
+        pmt_group_mean = pmt_group_mean[:, :, 1].argsort()
+        print(pmt_group_mean[:, :, 1])
+        print("test")
+        print(pmt_group_mean.shape)
 
 
-    def check_for_unique_pairs(a):
+def check_for_unique_pairs(a):
+        """Takes an [n, 2] sized array and compares if any combination of the pairs across the 2-dimension 
+        occurs again."""
         a = np.array(a)
         a.sort(axis=1)
         b = np.ascontiguousarray(a).view(np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
