@@ -26,6 +26,7 @@ class map_hit_data():
 
     def mod_id_to_floor_string(self):
         """Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]"""
+        """Also note that mod-id refers to which DOM one is looking at"""
         floor_str_hit = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         mapping = dict(zip(self.modid_map[:,0], range(len(modid_map))))
         for i in range(0, self.muon_hit_data.shape[1]):
@@ -41,7 +42,6 @@ class map_hit_data():
         for i in range(1, max(indices)+1):
             if i in indices:
                 pmt_group_mean[:, k, :] = np.mean(self.floor_str_hit[:, j:i, :], axis=1)
-                print(i, j)
                 j = i + 1; k = k + 1
         return pmt_group_mean
 
@@ -62,16 +62,14 @@ class map_hit_data():
 
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
-        str_list, floor_list = np.unique(pmt_group_mean[:, 0, 0]), np.unique(pmt_group_mean[:, 0, 1])
-        heatmap = np.zeros([len(floor_list), len(str_list)]) #0th dimension floors 1th dimension strings 
-        #Sort pmt_groups on str and floor
-        print(pmt_group_mean[0, ...])
-        print("test")
-        print(pmt_group_mean.shape)
         #print(pmt_group_mean)
-        #pmt_group_mean = pmt_group_mean[pmt_group_mean[:, :, 1].argsort()]
-        pmt_group_mean = pmt_group_mean[:, :, 1].argsort()
-        print(pmt_group_mean[:, :, 1])
+        #print(pmt_group_mean.shape)
+        str_list, floor_list = np.unique(pmt_group_mean[:, 0, 0]), np.unique(pmt_group_mean[:, 0, 1])
+        test = np.unique(pmt_group_mean[:, 0, 0], return_index=True)
+        heatmap = np.zeros([len(floor_list), len(str_list)]) #0th dimension floors 1th dimension strings 
+        print(heatmap.shape)
+        print(18 * 21)
+        #Sort pmt_groups on str and floor
         print("test")
         print(pmt_group_mean.shape)
 
