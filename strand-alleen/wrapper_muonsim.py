@@ -63,4 +63,4 @@ for j in range(0, len(domid_map)):
         hit_array[j, i, 1] = i
         hit_array[j, i, 2] = rmap.geth(domid_map[j], i).Integral(lowerbound,upperbound)
 
-np.save("muon_hit_data.npy", hit_array)
+np.save("muon_hit_data2.npy", hit_array)
