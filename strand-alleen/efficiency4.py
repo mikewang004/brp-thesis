@@ -12,6 +12,7 @@ import scipy.optimize as sp
 import ROOT 
 import plotly.io as pio
 import plotly.express as px
+from collections import Counter
 
 pio.renderers.default='browser'
 
@@ -62,31 +63,37 @@ class map_hit_data():
 
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
-        #print(pmt_group_mean)
-        #print(pmt_group_mean.shape)
+        pmt_group_pairs = pmt_group_mean[:, 0, :2]
+        #Sort pmt_groups on str and floor
+        print(pmt_group_pairs[:10, :])
+        pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 1].argsort()]
+        pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 0].argsort()]
+        print(pmt_group_pairs[:10, :])
         str_list, floor_list = np.unique(pmt_group_mean[:, 0, 0]), np.unique(pmt_group_mean[:, 0, 1])
-        test = np.unique(pmt_group_mean[:, 0, 0], return_index=True)
+        print("test")
+        print(pmt_group_mean.shape)
         heatmap = np.zeros([len(floor_list), len(str_list)]) #0th dimension floors 1th dimension strings 
         print(heatmap.shape)
         print(18 * 21)
-        #Sort pmt_groups on str and floor
-        print("test")
-        print(pmt_group_mean.shape)
 
 
 def check_for_unique_pairs(a):
         """Takes an [n, 2] sized array and compares if any combination of the pairs across the 2-dimension 
         occurs again."""
-        a = np.array(a)
-        a.sort(axis=1)
-        b = np.ascontiguousarray(a).view(np.dtype((np.void, a.dtype.itemsize * a.shape[1])))
-        _, inv, ct = np.unique(b, return_inverse=True, return_counts=True)
-        print(ct[inv] == 1)
+        #ctr = Counter(frozenset(x) for x in a)
+        #b = [ctr[frozenset(x)] == 1 for x in a]
+        #print(b)
+        b = np.unique(a, axis = 0)
+        print(b.shape)
 
 
 
 
+indices = [0, 11, 18, 30]
 test = map_hit_data(muon_hit_data, modid_map)
 test.mod_id_to_floor_string()
-test.heatmap_averages([0, 11, 18, 30])
+test.heatmap_averages(indices)
 #test.heatmap_modid()
+
+pmt_group_mean = test.normalise_over_n_pmts(indices)
+pmt_group_pairs = pmt_group_mean[:, 0, :2]
