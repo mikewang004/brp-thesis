@@ -15,7 +15,7 @@ import plotly.express as px
 
 pio.renderers.default='browser'
 
-muon_hit_data = np.load("muon_hit_data.npy")
+muon_hit_data = np.load("muon_hit_data2.npy")
 modid_map = np.loadtxt("map.txt")
 
 class map_hit_data():
