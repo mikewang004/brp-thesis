@@ -63,6 +63,7 @@ class map_hit_data():
 
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
+        #pmt_group_pairs = pmt_group_mean[:, 0, :]
         pmt_group_pairs = pmt_group_mean[:, 0, :]
         #Sort pmt_groups on str and floor
         pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 0].argsort()] 
@@ -70,16 +71,22 @@ class map_hit_data():
         k = 0; l = 0;
         for i in range(1, pmt_group_pairs.shape[0]):
         #for i in range(0, 100):
-            if pmt_group_pairs[i, 0] != pmt_group_pairs[i-1, 0]:
+            if pmt_group_pairs[i, 0] != pmt_group_pairs[i-1, 0] or i == (pmt_group_pairs.shape[0]-1):
                 #pmt_group_pairs[k:i, :] = pmt_group_pairs[pmt_group_pairs[k:i, 1].argsort()]
                 #print(pmt_group_pairs[k:i, :])
                 new_index_part = pmt_group_pairs[k:i, 1].argsort()
                 #Apply new indexing to correct part of array 
-                aux_array = pmt_group_pairs[k:i, :]
-                aux_array = aux_array[aux_array[:, 1].argsort()]
-                pmt_group_pairs[k:i, :] = aux_array
-                k = i+1; l = l + 1
-        print(pmt_group_pairs[250:, :])
+                if i == (pmt_group_pairs.shape[0]-1):
+                    aux_array = pmt_group_pairs[k:, :]
+                    aux_array = aux_array[aux_array[:, 1].argsort()]
+                    pmt_group_pairs[k:, :] = aux_array
+                else:
+                    aux_array = pmt_group_pairs[k:i, :]
+                    aux_array = aux_array[aux_array[:, 1].argsort()]
+                    pmt_group_pairs[k:i, :] = aux_array
+                k = i; l = l + 1
+        print(pmt_group_pairs[200:, :])
+
 
 
 
