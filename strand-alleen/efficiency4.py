@@ -61,14 +61,12 @@ class map_hit_data():
         #fig.show()
         return 0;
 
-    def heatmap_averages(self, indices):
-        pmt_group_mean = self.normalise_over_n_pmts(indices)
-        #pmt_group_pairs = pmt_group_mean[:, 0, :]
-        pmt_group_pairs = pmt_group_mean[:, 0, :]
+    def heatmap_averages_single_loop(self, pmt_group_pairs):
         #Sort pmt_groups on str and floor
         pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 0].argsort()] 
         #First sort according to string; then according to floor 
         k = 0; l = 0;
+        str_floor_length = np.zeros([len(np.unique(pmt_group_pairs[:, 0]))]) #details how many floors in a string; 
         for i in range(1, pmt_group_pairs.shape[0]):
         #for i in range(0, 100):
             if pmt_group_pairs[i, 0] != pmt_group_pairs[i-1, 0] or i == (pmt_group_pairs.shape[0]-1):
@@ -84,8 +82,26 @@ class map_hit_data():
                     aux_array = pmt_group_pairs[k:i, :]
                     aux_array = aux_array[aux_array[:, 1].argsort()]
                     pmt_group_pairs[k:i, :] = aux_array
+                str_floor_length[l] = i - k
                 k = i; l = l + 1
-        print(pmt_group_pairs[200:, :])
+        return pmt_group_pairs, str_floor_length
+
+    def heatmap_averages(self, indices):
+        pmt_group_mean = self.normalise_over_n_pmts(indices)
+        pmt_group_mean_sorted = pmt_group_mean
+        #pmt_group_pairs = pmt_group_mean[:, 0, :]
+        for m in range(0, len(indices)-1):
+            pmt_group_pairs = pmt_group_mean[:, m, :]
+            pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs)
+        heatmap = np.zeros([np.sum(str_floor_length, dtype=int), len(np.unique(pmt_group_mean_sorted[:, 0, 0]))])
+
+        #TODO fill in heatmap and account for nans.
+        for i in range(0, heatmap.shape[1]): #first fill in the x/string direction
+            for j in range(0, heatmap.shape[0]): #then for y/floor direction 
+                pass #TODO note that gaps will occur in heatmap as not all floor/strings have data. 
+        
+        
+
 
 
 
