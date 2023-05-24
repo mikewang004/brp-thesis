@@ -63,18 +63,25 @@ class map_hit_data():
 
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
-        pmt_group_pairs = pmt_group_mean[:, 0, :2]
+        pmt_group_pairs = pmt_group_mean[:, 0, :]
         #Sort pmt_groups on str and floor
-        print(pmt_group_pairs[:10, :])
-        pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 1].argsort()]
-        pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 0].argsort()]
-        print(pmt_group_pairs[:10, :])
-        str_list, floor_list = np.unique(pmt_group_mean[:, 0, 0]), np.unique(pmt_group_mean[:, 0, 1])
-        print("test")
-        print(pmt_group_mean.shape)
-        heatmap = np.zeros([len(floor_list), len(str_list)]) #0th dimension floors 1th dimension strings 
-        print(heatmap.shape)
-        print(18 * 21)
+        pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 0].argsort()] 
+        #First sort according to string; then according to floor 
+        k = 0; l = 0;
+        for i in range(1, pmt_group_pairs.shape[0]):
+        #for i in range(0, 100):
+            if pmt_group_pairs[i, 0] != pmt_group_pairs[i-1, 0]:
+                #pmt_group_pairs[k:i, :] = pmt_group_pairs[pmt_group_pairs[k:i, 1].argsort()]
+                #print(pmt_group_pairs[k:i, :])
+                new_index_part = pmt_group_pairs[k:i, 1].argsort()
+                #Apply new indexing to correct part of array 
+                aux_array = pmt_group_pairs[k:i, :]
+                aux_array = aux_array[aux_array[:, 1].argsort()]
+                pmt_group_pairs[k:i, :] = aux_array
+                k = i+1; l = l + 1
+        print(pmt_group_pairs[250:, :])
+
+
 
 
 def check_for_unique_pairs(a):
