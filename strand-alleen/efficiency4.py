@@ -89,17 +89,33 @@ class map_hit_data():
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
+        print(pmt_group_mean_sorted[:, 0, :])
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
             pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs)
-        heatmap = np.zeros([np.sum(str_floor_length, dtype=int), len(np.unique(pmt_group_mean_sorted[:, 0, 0]))])
-
+        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
+        heatmap = np.zeros([len(floorlist), len(np.unique(stringlist))])
+        print(heatmap.shape)
         #TODO fill in heatmap and account for nans.
-        for i in range(0, heatmap.shape[1]): #first fill in the x/string direction
-            for j in range(0, heatmap.shape[0]): #then for y/floor direction 
-                pass #TODO note that gaps will occur in heatmap as not all floor/strings have data. 
-        
+        k = 0; m = 0; x = 0
+        for i in range(0, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
+            if pmt_group_mean_sorted[i, 0, 0] != pmt_group_mean_sorted[i-1, 0, 0]:
+                #Now look if there are any gaps in the data 
+                for j in range(0, len(floorlist)):
+                    l = 0 
+                    if pmt_group_mean_sorted[j+k, 0, 1] == floorlist[j]:
+                        heatmap[j, m] = pmt_group_mean_sorted[j+k, 0, 4]
+                    else:
+                        heatmap[j, m] = np.nan
+                        print(stringlist[m], floorlist[j])
+                        print(pmt_group_mean_sorted[j+k, 0, :2])
+                        #j = j + 1
+                        x = x + 1
+                        j = j + np.abs(pmt_group_mean_sorted[j+k, 0, 1] - floorlist[j]) #skip ahead to current pmt number
+                m = m + 1; k = i
+        print(x)
+        #print(heatmap)
         
 
 
