@@ -9,10 +9,10 @@ Created on Mon May  8 15:54:39 2023
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as sp
-import ROOT 
 import plotly.io as pio
 import plotly.express as px
-from collections import Counter
+#TODO look at the dom-list and just insert all the doms without hits a nan. 
+#Might have to look at the wrapper of aarts code. 
 
 pio.renderers.default='browser'
 
@@ -89,33 +89,36 @@ class map_hit_data():
     def heatmap_averages(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
-        print(pmt_group_mean_sorted[:, 0, :])
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
             pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs)
+        np.savetxt("pmt_string_sorted.txt", np.array(pmt_group_mean_sorted[:, 0, :2], dtype=int))
         floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
         heatmap = np.zeros([len(floorlist), len(np.unique(stringlist))])
-        print(heatmap.shape)
         #TODO fill in heatmap and account for nans.
-        k = 0; m = 0; x = 0
-        for i in range(0, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
+        k = 0; m = 0; x = 0; j = 0
+        #for i in range(1, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
+        for i in range(1, 70):
             if pmt_group_mean_sorted[i, 0, 0] != pmt_group_mean_sorted[i-1, 0, 0]:
-                #Now look if there are any gaps in the data 
-                for j in range(0, len(floorlist)):
-                    l = 0 
-                    if pmt_group_mean_sorted[j+k, 0, 1] == floorlist[j]:
-                        heatmap[j, m] = pmt_group_mean_sorted[j+k, 0, 4]
+                while j < len(floorlist):
+                    #TODO if first floor does not exist a lag in which floors do not exist will occur. 
+                    if floorlist[j] == pmt_group_mean_sorted[k+j, 0, 1]:
+                        heatmap[j, m] = pmt_group_mean_sorted[k+j, 0, 4]
+                        if pmt_group_mean_sorted[k+j, 0, 1] == np.amax(pmt_group_mean_sorted[k:i, 0, 1]): #breaks loop at max floor no
+                            break
                     else:
-                        heatmap[j, m] = np.nan
-                        print(stringlist[m], floorlist[j])
-                        print(pmt_group_mean_sorted[j+k, 0, :2])
-                        #j = j + 1
                         x = x + 1
-                        j = j + np.abs(pmt_group_mean_sorted[j+k, 0, 1] - floorlist[j]) #skip ahead to current pmt number
-                m = m + 1; k = i
-        print(x)
-        #print(heatmap)
+                        print(stringlist[m], floorlist[j], pmt_group_mean_sorted[k+j, 0, :2])
+                        heatmap[j, m] = np.nan
+                        print(np.abs(floorlist[j] - pmt_group_mean_sorted[k + j, 0, 1]))
+                        print(" ")
+                        j = j + np.abs(floorlist[j] - pmt_group_mean_sorted[k + j, 0, 1]-1)
+                    j = int(j + 1)
+                    #print(heatmap[j, m])
+                print(pmt_group_mean_sorted[k:i, 0, :2])
+                
+                m = m + 1; k = i; j = 0
         
 
 
