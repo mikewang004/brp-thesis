@@ -72,7 +72,6 @@ class map_hit_data():
             if pmt_group_pairs[i, 0] != pmt_group_pairs[i-1, 0] or i == (pmt_group_pairs.shape[0]-1):
                 #pmt_group_pairs[k:i, :] = pmt_group_pairs[pmt_group_pairs[k:i, 1].argsort()]
                 #print(pmt_group_pairs[k:i, :])
-                new_index_part = pmt_group_pairs[k:i, 1].argsort()
                 #Apply new indexing to correct part of array 
                 if i == (pmt_group_pairs.shape[0]-1):
                     aux_array = pmt_group_pairs[k:, :]
@@ -86,36 +85,47 @@ class map_hit_data():
                 k = i; l = l + 1
         return pmt_group_pairs, str_floor_length
 
-    def heatmap_averages(self, indices):
+    def heatmap_array(self, indices):
+        pmt_group = 0
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
             pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs)
-        np.savetxt("pmt_string_sorted.txt", np.array(pmt_group_mean_sorted[:, 0, :], dtype=int))
-        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
+        floorlist = np.unique(pmt_group_mean_sorted[:, pmt_group, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, pmt_group, 0])
         heatmap = np.zeros([len(floorlist), len(np.unique(stringlist))])
+        print(np.unique(stringlist))
         #TODO fill in heatmap and account for nans.
         k = 0; m = 0; x = 0; j = 0; l = 0
         for i in range(1, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
         #for i in range(1, 70):
             #New approach: floorlist index is not the same as pmt group mean sorted index. 
-            if pmt_group_mean_sorted[i, 0, 0] != pmt_group_mean_sorted[i-1, 0, 0]:
+            if pmt_group_mean_sorted[i, pmt_group, 0] != pmt_group_mean_sorted[i-1, pmt_group, 0] or i == pmt_group_mean_sorted.shape[0]-1:
                 while j < len(floorlist): #checks if all floor/string combinations are extant
                     #print(pmt_group_mean_sorted[k + l, 0, 1])
-                    print(j, l)
-                    if floorlist[j] == pmt_group_mean_sorted[k + l, 0, 1]: #case if combination is extant 
-                        heatmap[j, m] = pmt_group_mean_sorted[k + l, 0, 4]
+                    #print(j, l)
+                    if floorlist[j] == pmt_group_mean_sorted[k + l, pmt_group, 1]: #case if combination is extant 
+                        heatmap[j, m] = pmt_group_mean_sorted[k + l, pmt_group, 4]
                         l = l + 1
                     else: #case if combination non-extant 
                         heatmap[j, m] = np.nan
                         x = x + 1
                     j = j + 1
-                print(pmt_group_mean_sorted[k:i, 0, :2])
-                m = m + 1; k = i; j = 0; l = 0    
-        return heatmap
-        
+                #print(pmt_group_mean_sorted[k:i, 0, :2])
+                m = m + 1; k = i; j = 0; l = 0
+        return heatmap, floorlist, stringlist
+    
+    def heatmap_averages(self, indices):
+        heatmap, floorlist, stringlist = self.heatmap_array(indices)
+        #Flip heatmap and floorlist in y-direction as floor 1 is closest to seabed.
+        #heatmap = np.flipud(heatmap); floorlist = np.flipud(floorlist)
+        fig = px.imshow(heatmap, labels=dict(x="string number",y="floor number", color="number of hits"), 
+                        x= stringlist,y = floorlist,
+                        title = "Rates of PMTs per DOM, PMTs 0-11", 
+                        text_auto=True, aspect="auto", width=2560, height=1440, origin="lower")
+        fig.write_image("mod-id-pmt-plot-upper.pdf")
+        return 0;
         
     def heatmap_averages_backup(self, indices):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
