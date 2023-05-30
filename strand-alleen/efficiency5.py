@@ -173,6 +173,12 @@ class heatmap():
         self.stringlist = stringlist
 
     def plot_heatmap(self, indices):
+
+        custom_colorscale = [
+            [0.0, 'rgb(0, 0, 255)'],
+            [1.0, 'rgb(255, 255, 0)'],
+            [2.0, 'rgb(0, 0, 255)']
+        ]
         for i in range(0, len(indices)-1):
             annotation_text = np.round(self.heatmap[i, :, :], 4)
             layout = go.Layout(
@@ -188,7 +194,7 @@ class heatmap():
                     tickvals = np.arange(len(self.floorlist)),
                     ticktext = self.floorlist,
                     dtick = 1
-            )
+                ),
         )
             fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}"), layout = layout)
             fig.update_traces(
