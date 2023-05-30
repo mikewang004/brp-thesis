@@ -15,7 +15,8 @@ import plotly.graph_objects as go
 
 pio.renderers.default='browser'
 
-muon_hit_data = np.load("muon_hit_data2.npy")
+muon_hit_data_sim = np.load("muon_hit_data-sim.npy")
+muon_hit_data_real = np.load("muon_hit_data-real.npy")
 modid_map = np.loadtxt("map.txt")
 
 class map_hit_data():
@@ -150,15 +151,67 @@ class map_hit_data():
         #for i in range(0, 1):
             self.heatmap_equal_bins_single_loop(heatmap[i, :, :], indices, i, stringlist, floorlist)
 
+    def export_heatmap(self, indices):
+        pmt_group_mean = self.normalise_over_n_pmts(indices)
+        pmt_group_mean_sorted = pmt_group_mean
+        #pmt_group_pairs = pmt_group_mean[:, 0, :]
+        for m in range(0, len(indices)-1):
+            pmt_group_pairs = pmt_group_mean[:, m, :]
+            pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs) #Sorts the thing on string and floor so that they are in sequence. 
+        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
+        heatmap = np.zeros([len(indices)-1, len(floorlist), len(np.unique(stringlist))])
+        #Now get heatmap for each group
+        for i in range(0, len(indices)-1):
+            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist)
+
+        return heatmap, floorlist, stringlist 
+
+class heatmap():
+    def __init__(self, heatmap, floorlist, stringlist):
+        self.heatmap = heatmap
+        self.floorlist = floorlist
+        self.stringlist = stringlist
+
+    def plot_heatmap(self, indices):
+        for i in range(0, len(indices)-1):
+            annotation_text = np.round(self.heatmap[i, :, :], 4)
+            layout = go.Layout(
+                title = "Ratio of simulated vs real rates of PMTs per DOM, PMTs %i - %i" %(indices[i], indices[i + 1]),
+                xaxis = dict(
+                    tickmode = "array",
+                    tickvals = np.arange(len(self.stringlist)),
+                    ticktext = self.stringlist,
+                    dtick = 1
+                ),
+                yaxis = dict(
+                    tickmode = "array",
+                    tickvals = np.arange(len(self.floorlist)),
+                    ticktext = self.floorlist,
+                    dtick = 1
+            )
+        )
+            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}"), layout = layout)
+            fig.update_traces(
+                hovertemplate='x: %{x}<br>y: %{y}<br>z: %{text}',
+                textfont=dict(color='black')
+                )
+            fig.show()
+            write_path = str('ratio_rates_doms_pmt_%i_%i.pdf' %(indices[i], indices[i + 1]))
+            pio.write_image(fig, write_path)
+        return 0;
+
+def calc_heatmap_ratio(heatmap_real, heatmap_sim):
+    return heatmap_sim/heatmap_real
 
 
 
 indices = [0, 11, 18, 30]
-test = map_hit_data(muon_hit_data, modid_map)
-#test.heatmap_equal_bins(indices)
-test.pmt_group_data_to_heatmap(indices)
-#test.heatmap_averages(indices)
-#test.heatmap_modid()
 
-#pmt_group_mean = test.normalise_over_n_pmts(indices)
-#pmt_group_pairs = pmt_group_mean[:, 0, :2]
+data_real = map_hit_data(muon_hit_data_real, modid_map)
+data_sim = map_hit_data(muon_hit_data_sim, modid_map)
+
+real_map, floorlist, stringlist = data_real.export_heatmap(indices)
+sim_map, __, __ = data_sim.export_heatmap(indices)
+
+sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
+sim_ratio_map.plot_heatmap(indices)
