@@ -189,8 +189,8 @@ class heatmap():
         self.floorlist = floorlist
         self.stringlist = stringlist
 
-    def plot_heatmap(self, indices):
-
+    def plot_heatmap(self, indices, title):
+    
         custom_colorscale = [
             [0.0, 'rgb(0, 0, 255)'],
             [1.0, 'rgb(255, 255, 0)'],
@@ -198,8 +198,9 @@ class heatmap():
         ]
         for i in range(0, len(indices)-1):
             annotation_text = np.round(self.heatmap[i, :, :], 4)
+            title_counter = str(", PMTs %i - %i" %(indices[i], indices[i + 1]))
             layout = go.Layout(
-                title = "Ratio of simulated vs real rates of PMTs per DOM, PMTs %i - %i" %(indices[i], indices[i + 1]),
+                title = title + title_counter,
                 xaxis = dict(
                     tickmode = "array",
                     tickvals = np.arange(len(self.stringlist)),
@@ -233,8 +234,28 @@ real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 sim_map, __, __ = data_sim.export_heatmap(indices)
 sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff = 5)
 
-#sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
-#sim_ratio_map.plot_heatmap(indices)
+sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
+#sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM, PMTs %i - %i" %(indices[i], indices[i + 1]))
 
-sim_eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
-sim_eff_heatmap.plot_heatmap(indices)
+eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
+#sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
+
+
+#Create new dataset by laying the efficiency map over the ratio map 
+
+sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
+sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
+sim_ratio_eff_map[1, :, :, :] = eff_heatmap.heatmap[:, :, :]
+print(sim_ratio_eff_map[0, 2, :, :].all() == sim_ratio_eff_map[0, 0, :, :].all())
+for k in range(0, 3):
+    for j in range(0, sim_ratio_eff_map.shape[3]):
+        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
+            pass
+            plt.scatter(sim_ratio_eff_map[0,k, i, j], sim_ratio_eff_map[1,k, i, j])
+    plt.ylim(0.5, 1.15)
+    plt.xlim(1.2, 1.5)
+    plt.xlabel("simulated/real hit rates ratio")
+    plt.ylabel("efficiency")
+    plt.title("DOMs efficiency vs simulated/real hit rate ratio")
+    plt.savefig("test-%i.pdf" %k)
+    plt.show()
