@@ -18,13 +18,31 @@ pio.renderers.default='browser'
 muon_hit_data_sim = np.load("muon_hit_data-sim.npy")
 muon_hit_data_real = np.load("muon_hit_data-real.npy")
 modid_map = np.loadtxt("map.txt")
+eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
     def __init__(self, muon_hit_data, pmt_id_map):
         self.muon_hit_data = muon_hit_data
         self.modid_map = modid_map
+        self.eff_list = eff_list
+        self.append_eff_data()
         self.mod_id_to_floor_string()
+
+    def append_eff_data(self):
+        """Couples the new efficiency data to a DOM-module number."""
+        new_muon_hit_data = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+1]) #should be ok with other code 
+        new_muon_hit_data[:, :, :3] = self.muon_hit_data
+        for i in range(0, len(self.muon_hit_data)):
+            #Look up which data corresponds in the efficiency list
+            for j in range(0, len(self.eff_list)):
+                if self.muon_hit_data[i, 0, 0] == self.eff_list[j, 0]:
+                    for k in range(0, 30):
+                        new_muon_hit_data[i, k, 3] = self.eff_list[j + k, 2]
+                    break
+        self.muon_hit_data = new_muon_hit_data
+        return 0;
+
 
     def mod_id_to_floor_string(self):
         """Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]"""
@@ -33,9 +51,8 @@ class map_hit_data():
         mapping = dict(zip(self.modid_map[:,0], range(len(modid_map))))
         for i in range(0, self.muon_hit_data.shape[1]):
             floor_str_hit[:, i, :] = np.hstack((np.array([self.modid_map[mapping[key],1:] for key in self.muon_hit_data[:,i,0]]), self.muon_hit_data[:, i, :]))
-        print(np.unique(floor_str_hit[:, 0, 0], axis = 0))
         self.floor_str_hit = floor_str_hit
-        print(floor_str_hit.shape)
+
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
@@ -86,8 +103,8 @@ class map_hit_data():
                 k = i; l = l + 1
         return pmt_group_pairs, str_floor_length
 
-    def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist):
-        k = 0; m = 0; x = 0; j = 0; l = 0
+    def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
+        k = 0; m = 0; x = 0; j = 0; l = 0; #n = 4 for rates; n = 5 for efficiencies 
         for i in range(1, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
         #for i in range(1, 70):
             #New approach: floorlist index is not the same as pmt group mean sorted index. 
@@ -96,7 +113,7 @@ class map_hit_data():
                     #print(pmt_group_mean_sorted[k + l, 0, 1])
                     #print(j, l)
                     if floorlist[j] == pmt_group_mean_sorted[k + l, 1]: #case if combination is extant 
-                        heatmap[j, m] = pmt_group_mean_sorted[k + l, 4]
+                        heatmap[j, m] = pmt_group_mean_sorted[k + l, int_rates_or_eff]
                         l = l + 1
                     else: #case if combination non-extant 
                         heatmap[j, m] = np.nan
@@ -145,13 +162,13 @@ class map_hit_data():
         #Now get heatmap for each group
         print(len(indices)-1)
         for i in range(0, len(indices)-1):
-            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist)
+            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff=4)
         #Plot heatmaps
         for i in range(0, len(indices)-1):
         #for i in range(0, 1):
             self.heatmap_equal_bins_single_loop(heatmap[i, :, :], indices, i, stringlist, floorlist)
 
-    def export_heatmap(self, indices):
+    def export_heatmap(self, indices, int_rates_or_eff=4):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
@@ -162,7 +179,7 @@ class map_hit_data():
         heatmap = np.zeros([len(indices)-1, len(floorlist), len(np.unique(stringlist))])
         #Now get heatmap for each group
         for i in range(0, len(indices)-1):
-            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist)
+            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff)
 
         return heatmap, floorlist, stringlist 
 
@@ -197,13 +214,9 @@ class heatmap():
                 ),
         )
             fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}"), layout = layout)
-            fig.update_traces(
-                hovertemplate='x: %{x}<br>y: %{y}<br>z: %{text}',
-                textfont=dict(color='black')
-                )
             fig.show()
-            write_path = str('ratio_rates_doms_pmt_%i_%i.pdf' %(indices[i], indices[i + 1]))
-            pio.write_image(fig, write_path)
+            #write_path = str('ratio_rates_doms_pmt_%i_%i.pdf' %(indices[i], indices[i + 1]))
+            #pio.write_image(fig, write_path)
         return 0;
 
 def calc_heatmap_ratio(heatmap_real, heatmap_sim):
@@ -218,6 +231,10 @@ data_sim = map_hit_data(muon_hit_data_sim, modid_map)
 
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 sim_map, __, __ = data_sim.export_heatmap(indices)
+sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff = 5)
 
-sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
-sim_ratio_map.plot_heatmap(indices)
+#sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
+#sim_ratio_map.plot_heatmap(indices)
+
+sim_eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
+sim_eff_heatmap.plot_heatmap(indices)
