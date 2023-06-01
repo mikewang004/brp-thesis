@@ -14,10 +14,14 @@ for i in range(0, 10):
     infile_real.append("/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/data/KM3NeT_00000133/v8.1.1/reco/datav8.1.1.jchain.aashower.000%i%i.root" %(aashower_startno, aashower_midno + i))
 
 infile_sim = []
-sim_path = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco"
+sim_path = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/"
 with open("output.txt") as file:
     for line in file:
         infile_sim.append(sim_path + line)
+
+
+for i,n in enumerate(infile_sim):
+    infile_sim[i] = n.strip()
 
 f = EventFile( infile_sim )
 
