@@ -22,6 +22,8 @@ eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, us
 
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
+    """Note initial data muon_hit_data is 2d array w/ column headers module-id / pmt number / amount of hits.
+    If needed to append more data just append columns next to the last column as it should survive all operations."""
     def __init__(self, muon_hit_data, pmt_id_map):
         self.muon_hit_data = muon_hit_data
         self.modid_map = modid_map
@@ -64,20 +66,6 @@ class map_hit_data():
                 j = i + 1; k = k + 1
         return pmt_group_mean
 
-
-    def heatmap_modid(self):
-        #Reshape thing into heatmap w/ x-axis mod-id; y-axis pmt; z-axis hit rate 
-        heatmap = np.zeros([self.floor_str_hit.shape[1], self.floor_str_hit.shape[0]])
-        for i in range(0, heatmap.shape[0]):
-            heatmap[i, :] = self.floor_str_hit[:, i, 4]
-
-        fig = px.imshow(heatmap, labels=dict(x="module-id",y="pmt number", color="number of hits"), 
-                        x= self.floor_str_hit[:, 0, 2],y = self.floor_str_hit[0, :, 3],
-                        title = "Rates of PMTs per DOM", 
-                        text_auto=True, aspect="auto", width=2560, height=1440)
-        fig.write_image("mod-id-pmt-test-plot.pdf")
-        #fig.show()
-        return 0;
 
     def heatmap_averages_single_loop(self, pmt_group_pairs):
         #Sort pmt_groups on str and floor
@@ -148,26 +136,6 @@ class map_hit_data():
         pio.write_image(fig, write_path)
         return 0;
 
-    def pmt_group_data_to_heatmap(self, indices):
-        """Wrapper for the above two functions. Automatically converts the pmt data into groups, normalises over given groups and 
-        generates heatmap plots for all of them"""
-        pmt_group_mean = self.normalise_over_n_pmts(indices)
-        pmt_group_mean_sorted = pmt_group_mean
-        #pmt_group_pairs = pmt_group_mean[:, 0, :]
-        for m in range(0, len(indices)-1):
-            pmt_group_pairs = pmt_group_mean[:, m, :]
-            pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs) #Sorts the thing on string and floor so that they are in sequence. 
-        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
-        heatmap = np.zeros([len(indices)-1, len(floorlist), len(np.unique(stringlist))])
-        #Now get heatmap for each group
-        print(len(indices)-1)
-        for i in range(0, len(indices)-1):
-            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff=4)
-        #Plot heatmaps
-        for i in range(0, len(indices)-1):
-        #for i in range(0, 1):
-            self.heatmap_equal_bins_single_loop(heatmap[i, :, :], indices, i, stringlist, floorlist)
-
     def export_heatmap(self, indices, int_rates_or_eff=4):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
@@ -184,6 +152,7 @@ class map_hit_data():
         return heatmap, floorlist, stringlist 
 
 class heatmap():
+    """CLass to generate heatmap plots with string and/or floor information. Also useful to perform heatmap operations with."""
     def __init__(self, heatmap, floorlist, stringlist):
         self.heatmap = heatmap
         self.floorlist = floorlist
