@@ -14,4 +14,7 @@ with open("output.txt") as file:
     for line in file:
         sim_events_list.append(sim_path + line)
 
-print(sim_events_list)
+for i,n in enumerate(sim_events_list):
+    sim_events_list[i] = n.strip()
+
+print(sim_events_list[2])
