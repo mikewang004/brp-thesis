@@ -7,6 +7,11 @@ import numpy as np
 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3094.root" #simulated tracks
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/data/KM3NeT_00000133/v8.1.1/reco/datav8.1.1.jchain.aashower.00013754.root" #real data
+aashower_startno = 137
+infile_real = []
+for i in range(0, 10):
+    infile_real.append("/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/data/KM3NeT_00000133/v8.1.1/reco/datav8.1.1.jchain.aashower.00%i%i.root" %(aashower_startno, 50 + i))
+
 
 infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root", 
 "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3093.root",
@@ -23,7 +28,7 @@ infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm
 #infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root", "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3093.root"]
 #used numbers for above line are 3092-3 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root"
-f = EventFile( infile )
+f = EventFile( infile_real )
 
 
 rmap = residual_map()
@@ -64,4 +69,4 @@ for j in range(0, len(domid_map)):
         hit_array[j, i, 1] = i
         hit_array[j, i, 2] = rmap.geth(domid_map[j], i).Integral(lowerbound,upperbound)
 
-np.save("muon_hit_data-debug.npy", hit_array)
+np.save("muon_hit_data_real-001375x.npy", hit_array)

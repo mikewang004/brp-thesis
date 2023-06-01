@@ -152,7 +152,7 @@ class map_hit_data():
         return heatmap, floorlist, stringlist 
 
 class heatmap():
-    """CLass to generate heatmap plots with string and/or floor information. Also useful to perform heatmap operations with."""
+    """Class to generate heatmap plots with string and/or floor information. Also useful to perform heatmap operations with."""
     def __init__(self, heatmap, floorlist, stringlist):
         self.heatmap = heatmap
         self.floorlist = floorlist
@@ -217,14 +217,17 @@ sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
 sim_ratio_eff_map[1, :, :, :] = eff_heatmap.heatmap[:, :, :]
 print(sim_ratio_eff_map[0, 2, :, :].all() == sim_ratio_eff_map[0, 0, :, :].all())
 for k in range(0, 3):
-    for j in range(0, sim_ratio_eff_map.shape[3]):
-        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
-            pass
-            plt.scatter(sim_ratio_eff_map[0,k, i, j], sim_ratio_eff_map[1,k, i, j])
-    plt.ylim(0.5, 1.15)
-    plt.xlim(1.2, 1.5)
-    plt.xlabel("simulated/real hit rates ratio")
-    plt.ylabel("efficiency")
-    plt.title("DOMs efficiency vs simulated/real hit rate ratio")
-    plt.savefig("test-%i.pdf" %k)
-    plt.show()
+#    for j in range(0, sim_ratio_eff_map.shape[3]):
+#        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
+#            pass
+#            plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :])
+    plt.scatter(sim_ratio_eff_map[0, k, :, :], sim_ratio_eff_map[1, k, :, :], label = "PMTs %i-%i" %(indices[k], indices[k + 1]))
+plt.ylim(0.5, 1.15)
+plt.xlim(1.2, 1.5)
+plt.xlabel("simulated/real hit rates ratio")
+plt.ylabel("efficiency")
+plt.title("DOMs efficiency vs simulated/real hit rate ratio")
+plt.legend()
+plt.savefig("tt0-ratio_eff-all-pmts-map.pdf")
+plt.show()
+
