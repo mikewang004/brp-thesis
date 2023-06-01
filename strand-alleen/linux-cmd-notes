@@ -1,0 +1,13 @@
+ca013:/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco(0)>ls -l | grep "mupage_tuned_100G.sirene.jterbr0001375.*\.jchain.aashower.*\.root" | awk '!/\./ || /\.root$/'
+
+for seraching all relevant aashower sim files. Actual command as follows:
+
+ls -l | grep "mupage_tuned_100G.sirene.jterbr0001375.*\.jchain.aashower.*\.root" | awk '!/\./ || /\.root$/'
+
+To turn this into a list:
+
+
+
+file_list=$(ls ../../../../../../sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco | grep -E "abc[0-9]+\.def\.root$" | awk '!/\./ || /\.root$/')
+
+ls ../../../../../../sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco  | grep "mupage_tuned_100G.sirene.jterbr0001375.*\.jchain.aashower.*\.root" | awk '!/\./ || /\.root$/'
