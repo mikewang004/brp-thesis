@@ -189,8 +189,11 @@ class heatmap():
             #pio.write_image(fig, write_path)
         return 0;
 
+
+
 def calc_heatmap_ratio(heatmap_real, heatmap_sim):
     return heatmap_sim/heatmap_real
+
 
 
 
@@ -215,19 +218,29 @@ eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
 sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
 sim_ratio_eff_map[1, :, :, :] = eff_heatmap.heatmap[:, :, :]
-print(sim_ratio_eff_map[0, 2, :, :].all() == sim_ratio_eff_map[0, 0, :, :].all())
-for k in range(0, 3):
+#for k in range(0, 3):
+for k in range(0, sim_ratio_eff_map.shape[3]):
+    plt.figure()
+    for l in range(0, 3):
 #    for j in range(0, sim_ratio_eff_map.shape[3]):
 #        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
 #            pass
 #            plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :])
-    plt.scatter(sim_ratio_eff_map[0, k, :, :], sim_ratio_eff_map[1, k, :, :], label = "PMTs %i-%i" %(indices[k], indices[k + 1]))
-plt.ylim(0.5, 1.15)
-plt.xlim(1.2, 1.5)
-plt.xlabel("simulated/real hit rates ratio")
-plt.ylabel("efficiency")
-plt.title("DOMs efficiency vs simulated/real hit rate ratio")
-plt.legend()
-plt.savefig("tt0-ratio_eff-all-pmts-map.pdf")
-plt.show()
+    #plt.scatter(sim_ratio_eff_map[0, k, :, 1], sim_ratio_eff_map[1, k, :, 1], label = "PMTs %i-%i" %(indices[k], indices[k + 1]))
+    #plt.scatter(sim_ratio_eff_map[0,:,:,k], sim_ratio_eff_map[1,:,:,k], label="string %i" %(stringlist[k]))
+        plt.scatter(sim_ratio_eff_map[0, l, :, k], sim_ratio_eff_map[1, l, :, k], label = "PMTs %i-%i" %(indices[l], indices[l + 1]))
+    plt.ylim(0.5, 1.15)
+    plt.xlim(1.2, 1.5)
+    plt.xlabel("simulated/real hit rates ratio")
+    plt.ylabel("efficiency")
+    plt.title("DOMs efficiency vs simulated/real hit rate ratio, string %i" %(stringlist[k]))
+    plt.legend()
+    plt.savefig("str_plots/t0-ratio_eff-str-%i.pdf" %(stringlist[k]))
+    plt.show()
+#plt.show()
+
+
+#Get averages per dataset 
+
+print(np.average(sim_ratio_map.heatmap[0, :, :]))
 
