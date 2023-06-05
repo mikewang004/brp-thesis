@@ -161,9 +161,8 @@ class heatmap():
     def plot_heatmap(self, indices, title):
     
         custom_colorscale = [
-            [0.0, 'rgb(0, 0, 255)'],
-            [1.0, 'rgb(255, 255, 0)'],
-            [2.0, 'rgb(0, 0, 255)']
+            [1, 'rgb(255, 255, 0)'],
+            [0, 'rgb(0, 0, 255)']
         ]
         for i in range(0, len(indices)-1):
             annotation_text = np.round(self.heatmap[i, :, :], 4)
@@ -183,21 +182,62 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}"), layout = layout)
+            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=1.3, zmax=1.45), layout = layout)
             fig.show()
-            #write_path = str('ratio_rates_doms_pmt_%i_%i.pdf' %(indices[i], indices[i + 1]))
-            #pio.write_image(fig, write_path)
+            write_path = str('ratio_rates_doms_pmt_%i_%i.pdf' %(indices[i], indices[i + 1]))
+            pio.write_image(fig, write_path)
         return 0;
+
+    
+
+    def compare_upper_lower_pmts_heatmap(self, indices, title):
+        if len(indices)-1 != 2:
+            Exception("only works if there are only two heat maps to compare!")
+        else:
+            new_heatmap = self.heatmap[0, :, :]/self.heatmap[1, :, :]
+            custom_colorscale = [
+                [1, 'rgb(255, 255, 0)'],
+                [0, 'rgb(0, 0, 255)']
+            ]
+            annotation_text = np.round(new_heatmap[:, :], 4)
+            layout = go.Layout(
+                title = title,
+                xaxis = dict(
+                    tickmode = "array",
+                    tickvals = np.arange(len(self.stringlist)),
+                    ticktext = self.stringlist,
+                    dtick = 1
+                ),
+                yaxis = dict(
+                    tickmode = "array",
+                    tickvals = np.arange(len(self.floorlist)),
+                    ticktext = self.floorlist,
+                    dtick = 1
+                ),
+        )
+            fig = go.Figure(data = go.Heatmap(z=new_heatmap[:, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=0.9, zmax=1.05), layout = layout)
+            write_path = str('comparison_ratio.pdf')
+            pio.write_image(fig, write_path)
+            fig.show()
+
+    def get_mean_per_group(self, indices):
+        heatmap_mean = np.zeros(len(indices)-1)
+        heatmap_std = np.zeros(len(indices)-1)
+        for i in range(0, len(indices)-1):
+            heatmap_mean[i] = np.nanmean(self.heatmap[i, :, :])
+            heatmap_std[i] = np.nanstd(self.heatmap[i, :, :])
+        return heatmap_mean, heatmap_std
 
 
 
 def calc_heatmap_ratio(heatmap_real, heatmap_sim):
     return heatmap_sim/heatmap_real
+    #return heatmap_real/heatmap_sim
 
 
 
 
-indices = [0, 11, 18, 30]
+indices = [0, 12, 30]
 
 data_real = map_hit_data(muon_hit_data_real, modid_map)
 data_sim = map_hit_data(muon_hit_data_sim, modid_map)
@@ -207,7 +247,9 @@ sim_map, __, __ = data_sim.export_heatmap(indices)
 sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff = 5)
 
 sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
-#sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM, PMTs %i - %i" %(indices[i], indices[i + 1]))
+sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
+sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
+
 
 eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 #sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
@@ -218,26 +260,29 @@ eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
 sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
 sim_ratio_eff_map[1, :, :, :] = eff_heatmap.heatmap[:, :, :]
-#for k in range(0, 3):
-for k in range(0, sim_ratio_eff_map.shape[3]):
-    plt.figure()
-    for l in range(0, 3):
-#    for j in range(0, sim_ratio_eff_map.shape[3]):
-#        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
-#            pass
-#            plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :])
-    #plt.scatter(sim_ratio_eff_map[0, k, :, 1], sim_ratio_eff_map[1, k, :, 1], label = "PMTs %i-%i" %(indices[k], indices[k + 1]))
-    #plt.scatter(sim_ratio_eff_map[0,:,:,k], sim_ratio_eff_map[1,:,:,k], label="string %i" %(stringlist[k]))
-        plt.scatter(sim_ratio_eff_map[0, l, :, k], sim_ratio_eff_map[1, l, :, k], label = "PMTs %i-%i" %(indices[l], indices[l + 1]))
-    plt.ylim(0.5, 1.15)
-    plt.xlim(1.2, 1.5)
-    plt.xlabel("simulated/real hit rates ratio")
-    plt.ylabel("efficiency")
-    plt.title("DOMs efficiency vs simulated/real hit rate ratio, string %i" %(stringlist[k]))
-    plt.legend()
-    plt.savefig("str_plots/t0-ratio_eff-str-%i.pdf" %(stringlist[k]))
-    plt.show()
-#plt.show()
+
+
+def plot_ratio_eff(sim_ratio_eff_map, indices):
+    #for k in range(0, 3):
+    for k in range(0, sim_ratio_eff_map.shape[3]):
+        plt.figure()
+        for l in range(0, len(indices)-1):
+    #    for j in range(0, sim_ratio_eff_map.shape[3]):
+    #        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
+    #            pass
+    #            plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :])
+        #plt.scatter(sim_ratio_eff_map[0, k, :, 1], sim_ratio_eff_map[1, k, :, 1], label = "PMTs %i-%i" %(indices[k], indices[k + 1]))
+        #plt.scatter(sim_ratio_eff_map[0,:,:,k], sim_ratio_eff_map[1,:,:,k], label="string %i" %(stringlist[k]))
+            plt.scatter(sim_ratio_eff_map[0, l, :, k], sim_ratio_eff_map[1, l, :, k], label = "PMTs %i-%i" %(indices[l], indices[l + 1]))
+        plt.ylim(0.5, 1.15)
+        plt.xlim(1.2, 1.5)
+        plt.xlabel("simulated/real hit rates ratio")
+        plt.ylabel("efficiency")
+        plt.title("DOMs efficiency vs simulated/real hit rate ratio, string %i" %(stringlist[k]))
+        plt.legend()
+        #plt.savefig("str_plots/t0-ratio_eff-str-%i.pdf" %(stringlist[k]))
+        plt.show()
+
 
 
 #Get averages per dataset 
