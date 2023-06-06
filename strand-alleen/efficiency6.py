@@ -4,6 +4,8 @@
 Created on Mon May  8 15:54:39 2023
 
 @author: mike
+
+This file should also take into account the two different PMT versions and include a mapping per ring in the DOM. 
 """
 
 import numpy as np
@@ -19,17 +21,21 @@ muon_hit_data_sim = np.load("muon_hit_data-sim.npy")
 muon_hit_data_real = np.load("muon_hit_data-real.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
+pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
+magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
 
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
     """Note initial data muon_hit_data is 2d array w/ column headers module-id / pmt number / amount of hits.
     If needed to append more data just append columns next to the last column as it should survive all operations."""
-    def __init__(self, muon_hit_data, pmt_id_map):
+    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number):
         self.muon_hit_data = muon_hit_data
         self.modid_map = modid_map
-        self.eff_list = eff_list
+        self.eff_list = eff_list    
+        self.pmt_serial_map = pmt_serial_map; self.magic_number = magic_number
         self.append_eff_data()
         self.mod_id_to_floor_string()
+        self.append_pmt_serials()
 
     def append_eff_data(self):
         """Couples the new efficiency data to a DOM-module number."""
@@ -39,16 +45,35 @@ class map_hit_data():
             #Look up which data corresponds in the efficiency list
             for j in range(0, len(self.eff_list)):
                 if self.muon_hit_data[i, 0, 0] == self.eff_list[j, 0]:
-                    for k in range(0, 30):
+                    for k in range(0, 31):
                         new_muon_hit_data[i, k, 3] = self.eff_list[j + k, 2]
                     break
         self.muon_hit_data = new_muon_hit_data
         return 0;
 
+    def append_pmt_serials(self):
+        """Couples PMT-serials to respective PMTs."""
+        new_muon_hit_data = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
+        new_muon_hit_data[:,:,:4] = self.muon_hit_data
+        for i in range(0, len(self.muon_hit_data)):
+            for j in range(0, len(self.pmt_serial_map)):
+                if self.muon_hit_data[i, 0, 0] == self.pmt_serial_map[j]:
+                    for k in range(0, 31):
+                        new_muon_hit_data[i, k, 4] = self.pmt_serial_map[j + k+1]
+                        if self.pmt_serial_map[j + k + 1] > magic_number:
+                            new_muon_hit_data[i, k, 5] = 1
+                        else:
+                            new_muon_hit_data[i, k, 5] = 0
+                    break
+        self.muon_hit_data = new_muon_hit_data
+        print(new_muon_hit_data[:10, :, :])
+        return 0;
+
 
     def mod_id_to_floor_string(self):
-        """Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]"""
-        """Also note that mod-id refers to which DOM one is looking at"""
+        """Transforms data from a 2D to a 3D array including the different pmts. 
+        Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]
+        Also note that mod-id refers to which DOM one is looking at"""
         floor_str_hit = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         mapping = dict(zip(self.modid_map[:,0], range(len(modid_map))))
         for i in range(0, self.muon_hit_data.shape[1]):
@@ -239,8 +264,8 @@ def calc_heatmap_ratio(heatmap_real, heatmap_sim):
 
 indices = [0, 12, 30]
 
-data_real = map_hit_data(muon_hit_data_real, modid_map)
-data_sim = map_hit_data(muon_hit_data_sim, modid_map)
+data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
+data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number)
 
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 sim_map, __, __ = data_sim.export_heatmap(indices)
