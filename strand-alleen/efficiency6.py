@@ -22,6 +22,7 @@ muon_hit_data_real = np.load("muon_hit_data-real.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
+pmt_ring_map = np.loadtxt("../pmt-info/pmt-ring.txt", skiprows = 1, usecols = [0,1,2])
 magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
 
 class map_hit_data():
@@ -66,7 +67,6 @@ class map_hit_data():
                             new_muon_hit_data[i, k, 5] = 0
                     break
         self.muon_hit_data = new_muon_hit_data
-        print(new_muon_hit_data[:, 1, :])
         return 0;
 
 
@@ -79,6 +79,7 @@ class map_hit_data():
         for i in range(0, self.muon_hit_data.shape[1]):
             floor_str_hit[:, i, :] = np.hstack((np.array([self.modid_map[mapping[key],1:] for key in self.muon_hit_data[:,i,0]]), self.muon_hit_data[:, i, :]))
         self.floor_str_hit = floor_str_hit
+        return 0;
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
@@ -242,13 +243,14 @@ class heatmap():
             fig = go.Figure(data = go.Heatmap(z=new_heatmap[:, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=0.9, zmax=1.05), layout = layout)
             write_path = str('comparison_ratio.pdf')
             pio.write_image(fig, write_path)
-            #fig.show()
+            fig.show()
 
     def get_mean_per_group(self, indices):
+        #TODO make this 2d 
         heatmap_mean = np.zeros(len(indices)-1)
         heatmap_std = np.zeros(len(indices)-1)
         for i in range(0, len(indices)-1):
-            heatmap_mean[i] = np.nanmean(self.heatmap[i, :, :])
+            heatmap_mean[i] = np.nanmean(self.heatmap[i, :, :], axis = 0), np.nanmean(self.heatmap[i, :, :])
             heatmap_std[i] = np.nanstd(self.heatmap[i, :, :])
         return heatmap_mean, heatmap_std
 
@@ -271,8 +273,8 @@ sim_map, __, __ = data_sim.export_heatmap(indices)
 sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff = 5)
 
 sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
-sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
-sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
+#sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
+#sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
 
 
 eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
@@ -309,6 +311,9 @@ def plot_ratio_eff(sim_ratio_eff_map, indices):
         plt.show()
 
 def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
+    mean, std = sim_ratio_map.get_mean_per_group(indices)
+    print(mean)
+    print(mean.shape)
     for k in range(0, len(indices)-1):
         plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :], label = "PMTs %i-%i" %(indices[k], indices[k+1]))
     plt.ylim(0.5, 1.15)
