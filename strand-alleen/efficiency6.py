@@ -79,8 +79,6 @@ class map_hit_data():
         for i in range(0, self.muon_hit_data.shape[1]):
             floor_str_hit[:, i, :] = np.hstack((np.array([self.modid_map[mapping[key],1:] for key in self.muon_hit_data[:,i,0]]), self.muon_hit_data[:, i, :]))
         self.floor_str_hit = floor_str_hit
-        np.savetxt("bagger.txt", floor_str_hit[:, 1, :])
-
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
