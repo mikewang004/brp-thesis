@@ -29,14 +29,17 @@ class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
     """Note initial data muon_hit_data is 2d array w/ column headers module-id / pmt number / amount of hits.
     If needed to append more data just append columns next to the last column as it should survive all operations."""
-    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number):
-        self.muon_hit_data = muon_hit_data
+    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, floor_str_hit = None):
         self.modid_map = modid_map
         self.eff_list = eff_list    
         self.pmt_serial_map = pmt_serial_map; self.magic_number = magic_number
-        self.append_eff_data()
-        self.append_pmt_serials()
-        self.mod_id_to_floor_string()
+        if floor_str_hit == None:
+            self.muon_hit_data = muon_hit_data
+            self.append_eff_data()
+            self.append_pmt_serials()
+            self.mod_id_to_floor_string()
+        else:
+            self.floor_str_hit = floor_str_hit
 
     def append_eff_data(self):
         """Couples the new efficiency data to a DOM-module number."""
@@ -54,6 +57,7 @@ class map_hit_data():
 
     def append_pmt_serials(self):
         """Couples PMT-serials to respective PMTs."""
+        a = 0
         new_muon_hit_data = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         new_muon_hit_data[:,:,:4] = self.muon_hit_data
         for i in range(0, len(self.muon_hit_data)):
@@ -63,6 +67,7 @@ class map_hit_data():
                         new_muon_hit_data[i, k, 4] = self.pmt_serial_map[j + k+1]
                         if self.pmt_serial_map[j + k + 1] > magic_number:
                             new_muon_hit_data[i, k, 5] = 1
+                            a = a + 1
                         else:
                             new_muon_hit_data[i, k, 5] = 0
                     break
@@ -72,7 +77,7 @@ class map_hit_data():
 
     def mod_id_to_floor_string(self):
         """Transforms data from a 2D to a 3D array including the different pmts. 
-        Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits]
+        Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits; eff; pmt_serial; pmt_old/new]
         Also note that mod-id refers to which DOM one is looking at"""
         floor_str_hit = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         mapping = dict(zip(self.modid_map[:,0], range(len(modid_map))))
@@ -80,6 +85,17 @@ class map_hit_data():
             floor_str_hit[:, i, :] = np.hstack((np.array([self.modid_map[mapping[key],1:] for key in self.muon_hit_data[:,i,0]]), self.muon_hit_data[:, i, :]))
         self.floor_str_hit = floor_str_hit
         return 0;
+    
+    def return_floor_str_hit(self):
+        return self.floor_str_hit
+    
+    def apply_mask_return_floor_str_hit(self):
+        """Returns two masked arrays: one for all old pmts and one for all new ones.
+        Set all entries for which there is no data to either 0 or Nan."""
+        print(np.count_nonzero(self.floor_str_hit[:, :, 7] == 0))
+        floor_str_hit_new_pmts = self.floor_str_hit
+        a = floor_str_hit_new_pmts[:,:, 7] == 0
+        np.broadcast_to(a, (self.floor_str_hit.shape))
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
@@ -119,12 +135,9 @@ class map_hit_data():
     def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
         k = 0; m = 0; x = 0; j = 0; l = 0; #n = 4 for rates; n = 5 for efficiencies 
         for i in range(1, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
-        #for i in range(1, 70):
             #New approach: floorlist index is not the same as pmt group mean sorted index. 
             if pmt_group_mean_sorted[i, 0] != pmt_group_mean_sorted[i-1, 0] or i == pmt_group_mean_sorted.shape[0]-1:
                 while j < len(floorlist): #checks if all floor/string combinations are extant
-                    #print(pmt_group_mean_sorted[k + l, 0, 1])
-                    #print(j, l)
                     if floorlist[j] == pmt_group_mean_sorted[k + l, 1]: #case if combination is extant 
                         heatmap[j, m] = pmt_group_mean_sorted[k + l, int_rates_or_eff]
                         l = l + 1
@@ -132,7 +145,6 @@ class map_hit_data():
                         heatmap[j, m] = np.nan
                         x = x + 1
                     j = j + 1
-                #print(pmt_group_mean_sorted[k:i, 0, :2])
                 m = m + 1; k = i; j = 0; l = 0
         return heatmap
 
@@ -175,6 +187,8 @@ class map_hit_data():
             heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff)
 
         return heatmap, floorlist, stringlist 
+    
+
 
 class heatmap():
     """Class to generate heatmap plots with string and/or floor information. Also useful to perform heatmap operations with."""
@@ -245,14 +259,6 @@ class heatmap():
             pio.write_image(fig, write_path)
             fig.show()
 
-    def get_mean_per_group(self, indices):
-        #TODO make this 2d 
-        heatmap_mean = np.zeros(len(indices)-1)
-        heatmap_std = np.zeros(len(indices)-1)
-        for i in range(0, len(indices)-1):
-            heatmap_mean[i] = np.nanmean(self.heatmap[i, :, :], axis = 0), np.nanmean(self.heatmap[i, :, :])
-            heatmap_std[i] = np.nanstd(self.heatmap[i, :, :])
-        return heatmap_mean, heatmap_std
 
 
 
@@ -267,6 +273,8 @@ indices = [0, 12, 30]
 
 data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
 data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number)
+
+data_real.apply_mask_return_floor_str_hit()
 
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 sim_map, __, __ = data_sim.export_heatmap(indices)
@@ -311,11 +319,15 @@ def plot_ratio_eff(sim_ratio_eff_map, indices):
         plt.show()
 
 def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
-    mean, std = sim_ratio_map.get_mean_per_group(indices)
-    print(mean)
-    print(mean.shape)
+    err_colors = ["m", "c"]
     for k in range(0, len(indices)-1):
         plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :], label = "PMTs %i-%i" %(indices[k], indices[k+1]))
+    for k in range(0, len(indices)-1):
+        plt.errorbar(np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanmean(sim_ratio_eff_map[1,k, :, :]), 
+                     xerr = np.nanstd(sim_ratio_eff_map[0, k, :, :]),
+                     yerr = np.nanstd(sim_ratio_eff_map[1, k, :, :]), 
+                     fmt = "o", color = err_colors[k],
+                     label = "PMTs %i-%i, average" %(indices[k], indices[k+1]))
     plt.ylim(0.5, 1.15)
     plt.xlim(1.2, 1.5)
     plt.xlabel("simulated/real hit rates ratio")
@@ -324,9 +336,14 @@ def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
     plt.legend()
     plt.savefig("str_plots/t0-ratio_eff-str-fixed.pdf" %(stringlist[k]))
     plt.show()
+    for k in range(0, len(indices)-1):
+        print("For PMTs %i-%i the simulated/real hit rates ratio mean is %f +- %f." 
+              %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
+        print("For PMTs %i-%i the efficiency mean is %f +- %f." 
+              %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
 
 plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
-#Get averages per dataset 
 
-print(np.average(sim_ratio_map.heatmap[0, :, :]))
+
+#Now do the entire thing again but sort on PMT-type 
 
