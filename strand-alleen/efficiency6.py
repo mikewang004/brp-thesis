@@ -15,6 +15,7 @@ import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objects as go
 
+pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
 muon_hit_data_sim = np.load("muon_hit_data-sim.npy")
@@ -95,7 +96,7 @@ class map_hit_data():
         print(np.count_nonzero(self.floor_str_hit[:, :, 7] == 0))
         floor_str_hit_new_pmts = self.floor_str_hit
         a = floor_str_hit_new_pmts[:,:, 7] == 0
-        np.broadcast_to(a, (self.floor_str_hit.shape))
+        #np.broadcast_to(a, (self.floor_str_hit.shape))
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
@@ -133,6 +134,7 @@ class map_hit_data():
         return pmt_group_pairs, str_floor_length
 
     def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
+        """int_rates_or_eff = 4 for rates; =5 for efficiencies"""
         k = 0; m = 0; x = 0; j = 0; l = 0; #n = 4 for rates; n = 5 for efficiencies 
         for i in range(1, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
             #New approach: floorlist index is not the same as pmt group mean sorted index. 
@@ -221,10 +223,43 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=1.3, zmax=1.45), layout = layout)
+            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=0.7, zmax=1), layout = layout)
             fig.show()
-            write_path = str('ratio_rates_doms_pmt_%i_%i.pdf' %(indices[i], indices[i + 1]))
+            write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
             pio.write_image(fig, write_path)
+        return 0;
+    
+    def plot_heatmap_matplotlib(self, indices, title):
+        for i in range(0, len(indices) - 1):
+            annotation_text = np.round(self.heatmap[i, :, :], 4)
+            #plt.subplots_adjust(top=0.92, bottom=0.08)
+            extent = [-0.5, len(stringlist) - 0.5, -0.5, len(floorlist) - 0.5]
+            title_counter = ", PMTs {} - {}".format(indices[i], indices[i + 1])
+            fig, ax = plt.subplots()
+            im = ax.imshow(self.heatmap[i, :, :], extent=extent)
+            ax.set_title(title + title_counter)
+            ax.set_xticks(np.arange(len(self.stringlist)))
+            ax.set_xticklabels(self.stringlist)
+            ax.set_yticks(np.arange(len(self.floorlist)))
+            ax.set_yticklabels(self.floorlist)
+            ax.set_xlabel('X Label')
+            ax.set_ylabel('Y Label')
+    
+            # Display the z-value on the plot
+            for row in range(len(self.floorlist)):
+                for col in range(len(self.stringlist)):
+                    ax.text(col, row, annotation_text[row, col],
+                            ha="center", va="center", color="black")
+    
+            # Add a colorbar
+            cbar = ax.figure.colorbar(im)
+            cbar.set_label('Colorbar Label')
+    
+            #write_path = "{}_pmt_{}_{}.pdf".format(title, indices[i], indices[i + 1])
+            #plt.savefig(write_path)
+            
+            plt.show()
+
         return 0;
 
     
@@ -254,7 +289,7 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            fig = go.Figure(data = go.Heatmap(z=new_heatmap[:, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=0.9, zmax=1.05), layout = layout)
+            fig = go.Figure(data = go.Heatmap(z=new_heatmap[:, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=0.9, zmax=1.1), layout = layout)
             write_path = str('comparison_ratio.pdf')
             pio.write_image(fig, write_path)
             fig.show()
@@ -274,11 +309,12 @@ indices = [0, 12, 30]
 data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
 data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number)
 
-data_real.apply_mask_return_floor_str_hit()
+#data_real.apply_mask_return_floor_str_hit()
 
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
+real_eff_map, __, __, = data_real.export_heatmap(indices, int_rates_or_eff = 5)
 sim_map, __, __ = data_sim.export_heatmap(indices)
-sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff = 5)
+sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
 
 sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
 #sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
@@ -286,6 +322,7 @@ sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, string
 
 
 eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
+eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
 #sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
 
 
