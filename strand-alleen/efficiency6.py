@@ -86,17 +86,6 @@ class map_hit_data():
             floor_str_hit[:, i, :] = np.hstack((np.array([self.modid_map[mapping[key],1:] for key in self.muon_hit_data[:,i,0]]), self.muon_hit_data[:, i, :]))
         self.floor_str_hit = floor_str_hit
         return 0;
-    
-    def return_floor_str_hit(self):
-        return self.floor_str_hit
-    
-    def apply_mask_return_floor_str_hit(self):
-        """Returns two masked arrays: one for all old pmts and one for all new ones.
-        Set all entries for which there is no data to either 0 or Nan."""
-        print(np.count_nonzero(self.floor_str_hit[:, :, 7] == 0))
-        floor_str_hit_new_pmts = self.floor_str_hit
-        a = floor_str_hit_new_pmts[:,:, 7] == 0
-        #np.broadcast_to(a, (self.floor_str_hit.shape))
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
@@ -178,6 +167,8 @@ class map_hit_data():
     def export_heatmap(self, indices, int_rates_or_eff=4):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
+        print(pmt_group_mean_sorted)
+        print(pmt_group_mean_sorted.shape)
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
@@ -187,7 +178,7 @@ class map_hit_data():
         #Now get heatmap for each group
         for i in range(0, len(indices)-1):
             heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff)
-
+        np.savetxt("pmt-groups-mean-sorted-debug.txt", pmt_group_mean_sorted[:, 0, :])
         return heatmap, floorlist, stringlist 
     
 
@@ -207,7 +198,10 @@ class heatmap():
         ]
         for i in range(0, len(indices)-1):
             annotation_text = np.round(self.heatmap[i, :, :], 4)
-            title_counter = str(", PMTs %i - %i" %(indices[i], indices[i + 1]))
+            if i == len(indices)-2:
+                title_counter = str(", PMTs %i - %i" %(indices[i], indices[i + 1]))
+            else:
+                title_counter = str(", PMTs %i - %i" %(indices[i], indices[i + 1]-1))
             layout = go.Layout(
                 title = title + title_counter,
                 xaxis = dict(
@@ -311,21 +305,25 @@ data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_numb
 
 #data_real.apply_mask_return_floor_str_hit()
 
+
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
+
 real_eff_map, __, __, = data_real.export_heatmap(indices, int_rates_or_eff = 5)
 sim_map, __, __ = data_sim.export_heatmap(indices)
 sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
 
-sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
+
 #sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
 #sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
 
+#real_heatmap.plot_heatmap(indices, "real hits")
 
-eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
-eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
+
+#eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
 #sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
-
-
+sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
+real_heatmap = heatmap(real_map, floorlist, stringlist)
+eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 #Create new dataset by laying the efficiency map over the ratio map 
 
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
@@ -360,11 +358,18 @@ def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
     for k in range(0, len(indices)-1):
         plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :], label = "PMTs %i-%i" %(indices[k], indices[k+1]))
     for k in range(0, len(indices)-1):
-        plt.errorbar(np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanmean(sim_ratio_eff_map[1,k, :, :]), 
-                     xerr = np.nanstd(sim_ratio_eff_map[0, k, :, :]),
-                     yerr = np.nanstd(sim_ratio_eff_map[1, k, :, :]), 
-                     fmt = "o", color = err_colors[k],
-                     label = "PMTs %i-%i, average" %(indices[k], indices[k+1]))
+        if k == len(indices)-2:
+            plt.errorbar(np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanmean(sim_ratio_eff_map[1,k, :, :]), 
+                        xerr = np.nanstd(sim_ratio_eff_map[0, k, :, :]),
+                        yerr = np.nanstd(sim_ratio_eff_map[1, k, :, :]), 
+                        fmt = "o", color = err_colors[k],
+                        label = "PMTs %i-%i, average" %(indices[k], indices[k+1]))
+        else:
+            plt.errorbar(np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanmean(sim_ratio_eff_map[1,k, :, :]), 
+                        xerr = np.nanstd(sim_ratio_eff_map[0, k, :, :]),
+                        yerr = np.nanstd(sim_ratio_eff_map[1, k, :, :]), 
+                        fmt = "o", color = err_colors[k],
+                        label = "PMTs %i-%i, average" %(indices[k], indices[k+1]-1))
     plt.ylim(0.5, 1.15)
     plt.xlim(1.2, 1.5)
     plt.xlabel("simulated/real hit rates ratio")
@@ -374,12 +379,18 @@ def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
     plt.savefig("str_plots/t0-ratio_eff-str-fixed.pdf" %(stringlist[k]))
     plt.show()
     for k in range(0, len(indices)-1):
-        print("For PMTs %i-%i the simulated/real hit rates ratio mean is %f +- %f." 
-              %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
-        print("For PMTs %i-%i the efficiency mean is %f +- %f." 
-              %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
+        if k == len(indices)-2:
+            print("For PMTs %i-%i the simulated/real hit rates ratio mean is %f +- %f." 
+                %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
+            print("For PMTs %i-%i the efficiency mean is %f +- %f." 
+                %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
+        else:
+            print("For PMTs %i-%i the simulated/real hit rates ratio mean is %f +- %f." 
+                %(indices[k], indices[k+1]-1,np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
+            print("For PMTs %i-%i the efficiency mean is %f +- %f." 
+                %(indices[k], indices[k+1]-1,np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
 
-plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
+#plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 
 
 #Now do the entire thing again but sort on PMT-type 
