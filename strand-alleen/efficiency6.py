@@ -18,8 +18,8 @@ import plotly.graph_objects as go
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
-muon_hit_data_sim = np.load("muon_hit_data-sim.npy")
-muon_hit_data_real = np.load("muon_hit_data-real.npy")
+muon_hit_data_sim = np.load("muon_hit_data-sim-13754.npy")
+muon_hit_data_real = np.load("muon_hit_data-real-13754.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
@@ -120,6 +120,7 @@ class map_hit_data():
                     pmt_group_pairs[k:i, :] = aux_array
                 str_floor_length[l] = i - k
                 k = i; l = l + 1
+        print(pmt_group_pairs)
         return pmt_group_pairs, str_floor_length
 
     def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
@@ -167,8 +168,6 @@ class map_hit_data():
     def export_heatmap(self, indices, int_rates_or_eff=4):
         pmt_group_mean = self.normalise_over_n_pmts(indices)
         pmt_group_mean_sorted = pmt_group_mean
-        print(pmt_group_mean_sorted)
-        print(pmt_group_mean_sorted.shape)
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
@@ -316,14 +315,17 @@ sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
 #sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
 #sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
 
-#real_heatmap.plot_heatmap(indices, "real hits")
 
 
-#eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
-#sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
+
+
 sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
 real_heatmap = heatmap(real_map, floorlist, stringlist)
 eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
+
+#eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
+#sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
+real_heatmap.plot_heatmap(indices, "real hits")
 #Create new dataset by laying the efficiency map over the ratio map 
 
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
