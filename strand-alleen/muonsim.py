@@ -21,12 +21,17 @@ struct residual_map
     TH1D* geth( int dom_id, int channel_id )
     {
         TH1D*& h = M[ dom_id][ channel_id];
-
+        int a = 0 
         if (!h) 
         {
             string nam = "res"+str(dom_id)+"_"+str(channel_id);
             h = new TH1D(nam.c_str(),nam.c_str(), 200,-50,150); // TH1D (const char *name, const char *title, Int_t nbinsx, Double_t xlow, Double_t xup)
             h->SetDirectory(0);
+            a = a + 1 
+        }
+        if (a == 50) 
+        {
+            h->Draw(0);
         }
         return h;  
     }
@@ -49,10 +54,6 @@ struct residual_map
         return keys( M );
     }
 
-    void draw()
-    {
-        h->Draw();
-    }
     
 };
 """)
