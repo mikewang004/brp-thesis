@@ -7,6 +7,7 @@ import numpy as np
 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3094.root" #simulated tracks
 infile_real = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/data/KM3NeT_00000133/v8.1.1/reco/datav8.1.1.jchain.aashower.00013754.root" #real data
+#infile_debug = "../../data-zee/datav8.1.1.jchain.aashower.00013754.root"
 aashower_startno = 137
 #infile_real = []
 #for i in range(0, 10):
@@ -28,7 +29,7 @@ infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm
 #infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root", "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3093.root"]
 #used numbers for above line are 3092-3 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root"
-f = EventFile( infile )
+f = EventFile( infile_debug )
 
 
 rmap = residual_map()
@@ -44,7 +45,7 @@ for evt in f :
         continue
 
     rmap.fill( evt.hits, trk )
-
+    rmap.draw()
 
 print (notrack,"out of", f.size(),"events had no track")
 print()
@@ -70,4 +71,4 @@ for j in range(0, len(domid_map)):
         hit_array[j, i, 2] = rmap.geth(domid_map[j], i).Integral(lowerbound,upperbound)
 
 #np.save("muon_hit_data_real-001375x.npy", hit_array)
-np.save("muon_hit_data-sim-13754.npy", hit_array)
+#np.save("muon_hit_data-sim-13754.npy", hit_array)

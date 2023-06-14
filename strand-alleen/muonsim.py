@@ -48,6 +48,11 @@ struct residual_map
     {
         return keys( M );
     }
+
+    void draw()
+    {
+        h->Draw();
+    }
     
 };
 """)
