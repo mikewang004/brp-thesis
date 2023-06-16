@@ -7,7 +7,8 @@ void getrate(){
   TF1 *gausfit = new TF1("gausfit", "[0]*exp(-0.5*((x-[1])/[2])**2)");
 
 
- sprintf(fname,"%s","jra_133_14421.root");
+ // sprintf(fname,"%s","jra_133_14421.root");
+ sprintf(fname, "%s", "../../data-zee/datav8.1.1.jchain.aashower.00013754.root");
 
  TFile *f = new TFile(fname,"read");
 

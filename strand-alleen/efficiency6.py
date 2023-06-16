@@ -305,13 +305,13 @@ data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_numb
 #data_real.apply_mask_return_floor_str_hit()
 
 
-real_map, floorlist, stringlist = data_real.export_heatmap(indices)
+
 
 real_eff_map, __, __, = data_real.export_heatmap(indices, int_rates_or_eff = 5)
-sim_map, __, __ = data_sim.export_heatmap(indices)
-sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
+#sim_map, __, __ = data_sim.export_heatmap(indices)
+#sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
 
-
+real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 #sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
 #sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
 
