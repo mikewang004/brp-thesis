@@ -29,7 +29,7 @@ infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm
 #infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root", "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3093.root"]
 #used numbers for above line are 3092-3 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root"
-f = EventFile( infile_debug )
+f = EventFile( infile_real )
 
 
 rmap = residual_map()
@@ -45,7 +45,6 @@ for evt in f :
         continue
 
     rmap.fill( evt.hits, trk )
-    rmap.draw()
 
 print (notrack,"out of", f.size(),"events had no track")
 print()
