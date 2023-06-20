@@ -77,6 +77,6 @@ for j in range(0, len(domid_map)):
 #    for j in range(0, 18):
 #        f = f + rmap.geth(domid_map[list[i]],j) 
 #    f.Draw()
-#np.save("muon_hit_data_real-reduced_bins-001375x.npy", hit_array)
-np.save("muon_hit_data-sim-reduced_bins-13754.npy", hit_array)
+np.save("muon_hit_data_real-reduced_bins-001375x.npy", hit_array)
+#np.save("muon_hit_data-sim-reduced_bins-13754.npy", hit_array)
 #np.savetxt("domid-map.txt", domid_map)
