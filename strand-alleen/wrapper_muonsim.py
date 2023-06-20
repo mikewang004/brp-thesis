@@ -29,7 +29,7 @@ infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm
 #infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root", "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3093.root"]
 #used numbers for above line are 3092-3 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root"
-f = EventFile( infile_real )
+f = EventFile( infile )
 
 
 rmap = residual_map()
@@ -69,5 +69,11 @@ for j in range(0, len(domid_map)):
         hit_array[j, i, 1] = i
         hit_array[j, i, 2] = rmap.geth(domid_map[j], i).Integral(lowerbound,upperbound)
 
+f = rmap.geth(domid_map[j], i) #int dom_id, int channel_id gets the histogram for applicable dom-id/pmt-id 
+g = rmap.geth(domid_map[j], i-1) 
+a = f + g
+f.Draw()
+
 #np.save("muon_hit_data_real-001375x.npy", hit_array)
 #np.save("muon_hit_data-sim-13754.npy", hit_array)
+np.savetxt("domid-map.txt", domid_map)
