@@ -71,10 +71,10 @@ for j in range(0, len(domid_map)):
 #Try DOM 1, 8, 18; 809526109, 808985061, 808984586
 #corresponds to line no. 254, 197, 189 in the array.  
 
-list = [254, 197, 189]
+list = [253, 196, 188]
 for i in range(2, 3):
     f = rmap.geth(domid_map[list[i]], 0)
-    for j in range(1, 31):
+    for j in range(0, 18):
         f = f + rmap.geth(domid_map[list[i]],j) 
     f.Draw()
 #np.save("muon_hit_data_real-001375x.npy", hit_array)
