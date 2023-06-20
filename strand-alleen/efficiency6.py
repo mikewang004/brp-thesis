@@ -18,8 +18,8 @@ import plotly.graph_objects as go
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
-muon_hit_data_sim = np.load("muon_hit_data-sim-13754.npy")
-muon_hit_data_real = np.load("muon_hit_data-real-13754.npy")
+muon_hit_data_sim = np.load("muon_hit_data-sim-reduced_bins-13754.npy")
+muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
@@ -216,7 +216,7 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=0.7, zmax=1), layout = layout)
+            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=1400, zmax=2100), layout = layout)
             fig.show()
             write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
             pio.write_image(fig, write_path)
@@ -308,8 +308,8 @@ data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_numb
 
 
 real_eff_map, __, __, = data_real.export_heatmap(indices, int_rates_or_eff = 5)
-#sim_map, __, __ = data_sim.export_heatmap(indices)
-#sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
+sim_map, __, __ = data_sim.export_heatmap(indices)
+sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
 
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 #sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
