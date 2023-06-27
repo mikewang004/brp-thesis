@@ -20,6 +20,7 @@ pio.renderers.default='browser'
 
 muon_hit_data_sim = np.load("muon_hit_data-sim-reduced_bins-13754.npy")
 muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
+#muon_hit_data_real = np.load("muon_hit_data_real-reduced_bins-001375x.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
@@ -28,11 +29,10 @@ magic_number = 16104 # The major version change happened at serial number 16104 
 ijk = 0
 
 
-def compare_averages(muon_hit_data):
-    return np.mean(muon_hit_data[:12, :], axis = 0), np.mean(muon_hit_data[12:, :], axis = 0)
+
         
 
-print(compare_averages(muon_hit_data_real[0, :, :]))
+
 
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
