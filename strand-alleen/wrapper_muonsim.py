@@ -61,7 +61,7 @@ domid_map = list(rmap.domids())
 print("test if the map is working properly")
 #lowerbound, upperbound = -50, 60
 #Try boundaries from -10, 20
-lowerbound, upperbound = 50 -10 + 1, 50 + 20 + 1
+lowerbound, upperbound = 1, 200
 
 for j in range(0, len(domid_map)):
     """Structure as follows: [dom number, pmt-number, amount of hits]"""
