@@ -25,6 +25,14 @@ eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, us
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
 pmt_ring_map = np.loadtxt("../pmt-info/pmt-ring.txt", skiprows = 1, usecols = [0,1,2])
 magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
+ijk = 0
+
+
+def compare_averages(muon_hit_data):
+    return np.mean(muon_hit_data[:12, :], axis = 0), np.mean(muon_hit_data[12:, :], axis = 0)
+        
+
+print(compare_averages(muon_hit_data_real[0, :, :]))
 
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
@@ -95,6 +103,7 @@ class map_hit_data():
             if i in indices:
                 pmt_group_mean[:, k, :] = np.mean(self.floor_str_hit[:, j:i, :], axis=1)
                 j = i + 1; k = k + 1
+        np.savetxt("debug-avgpmts12.txt", pmt_group_mean[:, 1, :])
         return pmt_group_mean
 
 
@@ -120,7 +129,7 @@ class map_hit_data():
                     pmt_group_pairs[k:i, :] = aux_array
                 str_floor_length[l] = i - k
                 k = i; l = l + 1
-        print(pmt_group_pairs)
+        np.savetxt("debug-pmt-group-pairs-%i.txt" %(ijk), pmt_group_pairs)
         return pmt_group_pairs, str_floor_length
 
     def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
@@ -143,7 +152,6 @@ class map_hit_data():
     def heatmap_equal_bins_single_loop(self, heatmap, indices, group_no, stringlist, floorlist):
         #Define layout 
         annotation_text = np.round(heatmap, 4)
-        print(heatmap)
         layout = go.Layout(
             title = "Rates of PMTs per DOM, PMTs %i - %i" %(indices[group_no], indices[group_no + 1]),
             xaxis = dict(
