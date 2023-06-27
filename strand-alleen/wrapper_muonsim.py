@@ -60,7 +60,7 @@ hit_array = np.zeros([len(list(rmap.domids())),no_pmts,  3])
 domid_map = list(rmap.domids())
 print("test if the map is working properly")
 #lowerbound, upperbound = -50, 60
-lowerbound, upperbound = -10, 20
+lowerbound, upperbound = 50-10+1, 50+20+1
 
 for j in range(0, len(domid_map)):
     """Structure as follows: [dom number, pmt-number, amount of hits]"""
@@ -72,12 +72,18 @@ for j in range(0, len(domid_map)):
 #corresponds to line no. 254, 197, 189 in the array.  
 #Try histogram for all pmts 
 
-#list = [253, 196, 188]
-for i in range(2, 3):
-    f = rmap.geth(domid_map[list[i]], 0)
-    for j in range(0, 30):
-        f = f + rmap.geth(domid_map[list[i]],j) 
-    f.Draw()
+list = [253, 196, 188, 95] #corresponds to 13-5
+k = 0 
+for i in range(3, 4):
+    g = rmap.geth(domid_map[list[i]], 0)
+    for j in range(1, 30):
+        g = g + rmap.geth(domid_map[list[i]],j) 
+    g.Draw()
+    #print(np.sum(hit_array[list[i], :, 2]))
+    for l in range(45, 70):
+        k = k +  g.GetBinContent(l)
+    print(k)
+    
 np.save("muon_hit_data_real-reduced_bins-001375x.npy", hit_array)
 #np.save("muon_hit_data-sim-reduced_bins-13754.npy", hit_array)
 #np.savetxt("domid-map.txt", domid_map)
