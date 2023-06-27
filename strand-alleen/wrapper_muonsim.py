@@ -60,7 +60,8 @@ hit_array = np.zeros([len(list(rmap.domids())),no_pmts,  3])
 domid_map = list(rmap.domids())
 print("test if the map is working properly")
 #lowerbound, upperbound = -50, 60
-lowerbound, upperbound = 50-10+1, 50+20+1
+#Try boundaries from -10, 20
+lowerbound, upperbound = 50 -10 + 1, 50 + 20 + 1
 
 for j in range(0, len(domid_map)):
     """Structure as follows: [dom number, pmt-number, amount of hits]"""
