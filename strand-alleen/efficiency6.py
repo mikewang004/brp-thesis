@@ -19,19 +19,14 @@ pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
 muon_hit_data_sim = np.load("muon_hit_data-sim-reduced_bins-13754.npy")
-muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
-#muon_hit_data_real = np.load("muon_hit_data_real-reduced_bins-001375x.npy")
+#muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
+muon_hit_data_real = np.load("muon_hit_data_real-reduced_bins-001375x.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
 pmt_ring_map = np.loadtxt("../pmt-info/pmt-ring.txt", skiprows = 1, usecols = [0,1,2])
 magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
 ijk = 0
-
-
-
-        
-
 
 
 class map_hit_data():
@@ -224,7 +219,8 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=1400, zmax=2100), layout = layout)
+            zmax, zmin = np.nanmax(self.heatmap[i, :, :]), np.nanmin(self.heatmap[i, :, :])
+            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=zmin, zmax=zmax), layout = layout)
             fig.show()
             write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
             pio.write_image(fig, write_path)
