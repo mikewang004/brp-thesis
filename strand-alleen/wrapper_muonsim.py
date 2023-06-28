@@ -87,6 +87,6 @@ for j in range(0, len(domid_map)):
 #        k = k +  g.GetBinContent(l)
 #    print(k)
     
-#np.save("muon_hit_data_real-reduced_bins-001375x.npy", hit_array)
-np.save("muon_hit_data-sim-reduced_bins-001375x.npy", hit_array)
+#np.save("muon_hit_data-real-reduced_bins-xx1375x.npy", hit_array)
+np.save("muon_hit_data-sim-reduced_bins-xx1375x.npy", hit_array)
 #np.savetxt("domid-map.txt", domid_map)
