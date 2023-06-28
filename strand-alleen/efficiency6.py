@@ -90,15 +90,30 @@ class map_hit_data():
         self.floor_str_hit = floor_str_hit
         return 0;
 
+    def sum_over_n_pmts(self, indices):
+        """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
+        pmt_group_mean = np.zeros([self.floor_str_hit.shape[0], len(indices) - 1, self.floor_str_hit.shape[2]])
+        j = 0; k = 0
+        print(pmt_group_mean.shape)
+        for i in range(1, max(indices)+1):
+            if i in indices:
+                pmt_group_mean[:, k, 4] = np.nansum(self.floor_str_hit[:, j:i, 4], axis=1)
+                pmt_group_mean[:, k, :3] = np.nanmean(self.floor_str_hit[:, j:i, :3], axis = 1)
+                pmt_group_mean[:, k, 5:] = np.nanmean(self.floor_str_hit[:, j:i, 5:], axis = 1)
+                j = i + 1; k = k + 1
+        #np.savetxt("debug-avgpmts12.txt", pmt_group_mean[:, 1, :])
+        return pmt_group_mean
+
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
         pmt_group_mean = np.zeros([self.floor_str_hit.shape[0], len(indices) - 1, self.floor_str_hit.shape[2]])
         j = 0; k = 0
+        print(pmt_group_mean.shape)
         for i in range(1, max(indices)+1):
             if i in indices:
-                pmt_group_mean[:, k, :] = np.mean(self.floor_str_hit[:, j:i, :], axis=1)
+                pmt_group_mean[:, k, :] = np.nanmean(self.floor_str_hit[:, j:i, :], axis=1)
                 j = i + 1; k = k + 1
-        np.savetxt("debug-avgpmts12.txt", pmt_group_mean[:, 1, :])
+        #np.savetxt("debug-avgpmts12.txt", pmt_group_mean[:, 1, :])
         return pmt_group_mean
 
 
@@ -221,9 +236,10 @@ class heatmap():
         )
             zmax, zmin = np.nanmax(self.heatmap[i, :, :]), np.nanmin(self.heatmap[i, :, :])
             fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=zmin, zmax=zmax), layout = layout)
+            #print("Average of hits is %f +- %f" %(np.nanmean(self.heatmap[i, :, :]), np.nanstd(self.heatmap[i, :, :])))
             fig.show()
-            write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
-            pio.write_image(fig, write_path)
+            #write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
+            #pio.write_image(fig, write_path)
         return 0;
     
     def plot_heatmap_matplotlib(self, indices, title):
@@ -327,9 +343,9 @@ sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, string
 real_heatmap = heatmap(real_map, floorlist, stringlist)
 eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 
-#eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
-#sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs")
-real_heatmap.plot_heatmap(indices, "real hits")
+eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
+sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs, simulated data")
+#real_heatmap.plot_heatmap(indices, "Sum of all hits per DOM in indicated PMT group, real data")
 #Create new dataset by laying the efficiency map over the ratio map 
 
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])

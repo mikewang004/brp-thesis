@@ -5,6 +5,8 @@ import muonsim
 from muonsim import residual_map
 import numpy as np
 
+
+#TODO run this for actual bins including only the peak 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3094.root" #simulated tracks
 infile_real = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/data/KM3NeT_00000133/v8.1.1/reco/datav8.1.1.jchain.aashower.00013754.root" #real data
 #infile_debug = "../../data-zee/datav8.1.1.jchain.aashower.00013754.root"
@@ -29,7 +31,7 @@ infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm
 #infile = ["/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root", "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3093.root"]
 #used numbers for above line are 3092-3 
 #infile = "/sps/km3net/repo/data_processing/tag/v8.1/data_processing/prod/mc/atm_muon/KM3NeT_00000133/v8.1/reco/mcv8.1.mupage_tuned_100G.sirene.jterbr00013754.jchain.aashower.3092.root"
-f = EventFile( infile_real )
+f = EventFile( infile )
 
 
 rmap = residual_map()
@@ -73,18 +75,18 @@ for j in range(0, len(domid_map)):
 #corresponds to line no. 254, 197, 189 in the array.  
 #Try histogram for all pmts 
 
-list = [253, 196, 188, 95] #corresponds to 13-5
-k = 0 
-for i in range(3, 4):
-    g = rmap.geth(domid_map[list[i]], 0)
-    for j in range(1, 30):
-        g = g + rmap.geth(domid_map[list[i]],j) 
-    g.Draw()
-    #print(np.sum(hit_array[list[i], :, 2]))
-    for l in range(45, 70):
-        k = k +  g.GetBinContent(l)
-    print(k)
+#list = [253, 196, 188, 95] #corresponds to 13-5
+#k = 0 
+#for i in range(3, 4):
+#    g = rmap.geth(domid_map[list[i]], 0)
+#    for j in range(1, 30):
+#        g = g + rmap.geth(domid_map[list[i]],j) 
+#    g.Draw()
+#    #print(np.sum(hit_array[list[i], :, 2]))
+#    for l in range(45, 70):
+#        k = k +  g.GetBinContent(l)
+#    print(k)
     
-np.save("muon_hit_data_real-reduced_bins-001375x.npy", hit_array)
-#np.save("muon_hit_data-sim-reduced_bins-13754.npy", hit_array)
+#np.save("muon_hit_data_real-reduced_bins-001375x.npy", hit_array)
+np.save("muon_hit_data-sim-reduced_bins-13754.npy", hit_array)
 #np.savetxt("domid-map.txt", domid_map)
