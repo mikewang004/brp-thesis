@@ -18,9 +18,9 @@ import plotly.graph_objects as go
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
-muon_hit_data_sim = np.load("muon_hit_data-sim-reduced_bins-13754.npy")
+muon_hit_data_sim = np.load("muon_hit_data-sim-reduced_bins-xx1375x.npy")
 #muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
-muon_hit_data_real = np.load("muon_hit_data_real-reduced_bins-001375x.npy")
+muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-xx1375x.npy")
 modid_map = np.loadtxt("map.txt")
 eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
@@ -332,8 +332,8 @@ sim_map, __, __ = data_sim.export_heatmap(indices)
 sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
 
 real_map, floorlist, stringlist = data_real.export_heatmap(indices)
-#sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
-#sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
+
+
 
 
 
@@ -343,8 +343,11 @@ sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, string
 real_heatmap = heatmap(real_map, floorlist, stringlist)
 eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 
-eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
-sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs, simulated data")
+#eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
+#sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs, simulated data")
+
+sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
+sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
 #real_heatmap.plot_heatmap(indices, "Sum of all hits per DOM in indicated PMT group, real data")
 #Create new dataset by laying the efficiency map over the ratio map 
 
