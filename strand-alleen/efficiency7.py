@@ -198,7 +198,7 @@ class heatmap():
         self.floorlist = floorlist
         self.stringlist = stringlist
 
-    def plot_heatmap(self, indices, title):
+    def plot_heatmap(self, indices, pmt_letters, title):
     
         custom_colorscale = [
             [1, 'rgb(255, 255, 0)'],
@@ -206,12 +206,8 @@ class heatmap():
         ]
         for i in range(0, len(indices)-1):
             annotation_text = np.round(self.heatmap[i, :, :], 4)
-            if i == len(indices)-2:
-                title_counter = str(", PMTs %i - %i" %(indices[i], indices[i + 1]))
-            else:
-                title_counter = str(", PMTs %i - %i" %(indices[i], indices[i + 1]-1))
             layout = go.Layout(
-                title = title + title_counter,
+                title = title + ", PMT group %s" %((pmt_letters[i])),
                 xaxis = dict(
                     tickmode = "array",
                     tickvals = np.arange(len(self.stringlist)),
@@ -229,8 +225,8 @@ class heatmap():
             fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=zmin, zmax=zmax), layout = layout)
             #print("Average of hits is %f +- %f" %(np.nanmean(self.heatmap[i, :, :]), np.nanstd(self.heatmap[i, :, :])))
             fig.show()
-            #write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
-            #pio.write_image(fig, write_path)
+            write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
+            pio.write_image(fig, write_path)
         return 0;
     
     def plot_heatmap_matplotlib(self, indices, title):
@@ -259,8 +255,8 @@ class heatmap():
             cbar = ax.figure.colorbar(im)
             cbar.set_label('Colorbar Label')
     
-            #write_path = "{}_pmt_{}_{}.pdf".format(title, indices[i], indices[i + 1])
-            #plt.savefig(write_path)
+            write_path = "{}_pmt_{}_{}.pdf".format(title, indices[i], indices[i + 1])
+            plt.savefig(write_path)
             
             plt.show()
 
@@ -341,7 +337,7 @@ eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
 
 #sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
 #sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
-real_heatmap.plot_heatmap(indices, "Sum of all hits per DOM in indicated PMT group, real data")
+real_heatmap.plot_heatmap(indices, pmt_letters, "Sum of all hits per DOM for indicated PMT group, real data")
 #Create new dataset by laying the efficiency map over the ratio map 
 
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
