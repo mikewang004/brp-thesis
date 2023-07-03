@@ -14,19 +14,19 @@ import scipy.optimize as sp
 import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objects as go
+import plotly.colors as colors
 
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
-muon_hit_data_sim = np.load("muon_hit_data-sim-reduced_bins-xx1375x.npy")
+muon_hit_data_sim = np.load("data/muon_hit_data-sim-reduced_bins-xx1375x.npy")
 #muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
-muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-xx1375x.npy")
-modid_map = np.loadtxt("map.txt")
-eff_list = np.loadtxt("../zee-haarzelf/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
+muon_hit_data_real = np.load("data/muon_hit_data-real-reduced_bins-xx1375x.npy")
+modid_map = np.loadtxt("../pmt-info/map.txt")
+eff_list = np.loadtxt("data/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
 pmt_ring_map = np.loadtxt("../pmt-info/pmt-ring.txt", skiprows = 2, usecols = [0,1,2])
 magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
-ijk = 0
 
 
 class map_hit_data():
@@ -36,7 +36,7 @@ class map_hit_data():
 
     """Workflow as follows: data loadin is as 2d array with column as above. Then data gets appended, upon which the array gets transformed to 3d 
     with the pmt number being the 3rd dimension. Then data reorganised into heatmap."""
-    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, floor_str_hit = None):
+    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = 1, floor_str_hit = None):
         self.modid_map = modid_map
         self.eff_list = eff_list    
         self.pmt_serial_map = pmt_serial_map; self.magic_number = magic_number
@@ -46,6 +46,7 @@ class map_hit_data():
             self.append_pmt_serials()
             self.mod_id_to_floor_string()
             self.pmt_no_to_ring_letter()
+            self.apply_pmt_mask(new_versions = new_versions)
         else:
             self.floor_str_hit = floor_str_hit
 
@@ -96,36 +97,46 @@ class map_hit_data():
 
     def pmt_no_to_ring_letter(self):
         """Transforms the number of each PMT to a ring location."""
-        print(self.floor_str_hit[0, :, 3])
         for i in range(0, 31):
             self.floor_str_hit[:, i, 3] = pmt_ring_map[i, 1]
         return 0;
 
+    def apply_pmt_mask(self, new_versions=1):
+        """Filters for either new pmt version or the old one. Data located in column no 8.
+        If new_versions = 1, then only new versions are returned, otherwise only old versions returned."""
+        new_floor_str_hit = self.floor_str_hit
+        for i in range(0, 31):
+            current_floor_str_hit = self.floor_str_hit[:, i, :]
+            mask = self.floor_str_hit[:, i, 7].astype(int)
+            if new_versions == 1:
+                mask = 1 - mask
+            #masked_floor_str_hit = np.ma.masked_array(current_floor_str_hit, np.tile(mask, (8,1)).T)
+            #new_floor_str_hit[:, i, :] = masked_floor_str_hit.filled(fill_value= np.nan)
+            masked_floor_str_hit = np.ma.masked_array(current_floor_str_hit[:, 4:6], np.tile(mask, (2,1)).T)
+            new_floor_str_hit[:, i, 4:6] = masked_floor_str_hit.filled(fill_value= np.nan)
+        self.floor_str_hit = new_floor_str_hit
+        return 0;
 
     def sum_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
         pmt_group_mean = np.zeros([self.floor_str_hit.shape[0], len(indices) - 1, self.floor_str_hit.shape[2]])
         j = 0; k = 0
-        print(pmt_group_mean.shape)
         for i in range(1, max(indices)+1):
             if i in indices:
                 pmt_group_mean[:, k, 4] = np.nansum(self.floor_str_hit[:, j:i, 4], axis=1)
                 pmt_group_mean[:, k, :3] = np.nanmean(self.floor_str_hit[:, j:i, :3], axis = 1)
                 pmt_group_mean[:, k, 5:] = np.nanmean(self.floor_str_hit[:, j:i, 5:], axis = 1)
                 j = i + 1; k = k + 1
-        #np.savetxt("debug-avgpmts12.txt", pmt_group_mean[:, 1, :])
         return pmt_group_mean
 
     def normalise_over_n_pmts(self, indices):
         """Calculates average over any [n] groups of pmts. Group must include starting PMT-no. of group (inclusive) and stopping number (exclusive)"""
         pmt_group_mean = np.zeros([self.floor_str_hit.shape[0], len(indices) - 1, self.floor_str_hit.shape[2]])
         j = 0; k = 0
-        print(pmt_group_mean.shape)
         for i in range(1, max(indices)+1):
             if i in indices:
                 pmt_group_mean[:, k, :] = np.nanmean(self.floor_str_hit[:, j:i, :], axis=1)
                 j = i + 1; k = k + 1
-        #np.savetxt("debug-avgpmts12.txt", pmt_group_mean[:, 1, :])
         return pmt_group_mean
 
 
@@ -134,7 +145,6 @@ class map_hit_data():
         pmt_group_pairs = pmt_group_pairs[pmt_group_pairs[:, 0].argsort()] 
         #First sort according to string; then according to floor 
         k = 0; l = 0;
-        str_floor_length = np.zeros([len(np.unique(pmt_group_pairs[:, 0]))]) #details how many floors in a string; 
         for i in range(1, pmt_group_pairs.shape[0]):
         #for i in range(0, 100):
             if pmt_group_pairs[i, 0] != pmt_group_pairs[i-1, 0] or i == (pmt_group_pairs.shape[0]-1):
@@ -149,10 +159,8 @@ class map_hit_data():
                     aux_array = pmt_group_pairs[k:i, :]
                     aux_array = aux_array[aux_array[:, 1].argsort()]
                     pmt_group_pairs[k:i, :] = aux_array
-                str_floor_length[l] = i - k
                 k = i; l = l + 1
-        np.savetxt("debug-pmt-group-pairs-%i.txt" %(ijk), pmt_group_pairs)
-        return pmt_group_pairs, str_floor_length
+        return pmt_group_pairs
 
     def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
         """int_rates_or_eff = 4 for rates; =5 for efficiencies"""
@@ -178,7 +186,7 @@ class map_hit_data():
         #pmt_group_pairs = pmt_group_mean[:, 0, :]
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
-            pmt_group_mean_sorted[:, m, :], str_floor_length = self.heatmap_averages_single_loop(pmt_group_pairs) #Sorts the thing on string and floor so that they are in sequence. 
+            pmt_group_mean_sorted[:, m, :] = self.heatmap_averages_single_loop(pmt_group_pairs) #Sorts the thing on string and floor so that they are in sequence. 
         floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
         heatmap = np.zeros([len(indices)-1, len(floorlist), len(np.unique(stringlist))])
         #Now get heatmap for each group
@@ -196,14 +204,25 @@ class heatmap():
         self.floorlist = floorlist
         self.stringlist = stringlist
 
-    def plot_heatmap(self, indices, pmt_letters, title):
-    
-        custom_colorscale = [
-            [1, 'rgb(255, 255, 0)'],
-            [0, 'rgb(0, 0, 255)']
-        ]
+    def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None):
+        #custom_colorscale = [
+        #    [1, 'rgb(255, 255, 0)'],
+        #    [0, 'rgb(0, 0, 255)']
+        #]
+        #custom_colorscale = [
+        #    [0, 'rgb(50, 205, 173)'],
+        #    [1, 'rgb(205, 50, 82)']
+        #]
+        colorscale = colors.sequential.Sunset
+        colorscale = colorscale[::-1]
+        print(colorscale[0])
+        # Set a specific dark blue color for z=0
+        #colorscale[0] = 'rgb(17, 84, 1)'
+        #colorscale[0] = 'rgb(167, 2, 116)'
+        colorscale[0] = '#665679'
         for i in range(0, len(indices)-1):
-            annotation_text = np.round(self.heatmap[i, :, :], 4)
+            heatmap_current = self.heatmap[i, :, :]
+            annotation_text = np.round(heatmap_current, 4)
             layout = go.Layout(
                 title = title + ", PMT group %s" %((pmt_letters[i])),
                 xaxis = dict(
@@ -219,12 +238,18 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            zmax, zmin = np.nanmax(self.heatmap[i, :, :]), np.nanmin(self.heatmap[i, :, :])
-            fig = go.Figure(data = go.Heatmap(z=self.heatmap[i, :, :], text = annotation_text, texttemplate="%{text}", colorscale=custom_colorscale, zmin=zmin, zmax=zmax), layout = layout)
+            zmax, zmin = np.nanmax(heatmap_current), np.nanmin(heatmap_current[heatmap_current != 0])
+            fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin, zmax=zmax), layout = layout)
             #print("Average of hits is %f +- %f" %(np.nanmean(self.heatmap[i, :, :]), np.nanstd(self.heatmap[i, :, :])))
-            fig.show()
-            write_path = str('%s_pmt_%i_%i.pdf' %(title, indices[i], indices[i + 1]))
-            pio.write_image(fig, write_path)
+            #fig.show()
+            if save == "Yes":
+                if save_map == None:
+                    write_path = str('%s_pmt-ring-%s.pdf' %(title.replace(" ", "-"), pmt_letters[i]))
+                else:
+                    write_path = save_map + str('/%s_pmt-ring-%s.pdf' %(title.replace(" ", "-"), pmt_letters[i]))
+                pio.write_image(fig, write_path)
+            else:
+                pass
         return 0;
     
     def plot_heatmap_matplotlib(self, indices, title):
@@ -305,42 +330,10 @@ def calc_heatmap_ratio(heatmap_real, heatmap_sim):
 #indices = [0, 12, 30]
 indices = [0, 1, 7, 13, 19, 25, 31]
 pmt_letters = ["A", "B", "C", "D", "E", "F"]
-
-data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
-data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number)
-
-#data_real.apply_mask_return_floor_str_hit()
+#data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
+#real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 
 
-
-
-real_eff_map, __, __, = data_real.export_heatmap(indices, int_rates_or_eff = 5)
-sim_map, __, __ = data_sim.export_heatmap(indices)
-sim_eff_map, __, __ = data_sim.export_heatmap(indices, int_rates_or_eff =5)
-
-real_map, floorlist, stringlist = data_real.export_heatmap(indices)
-
-
-
-
-
-
-
-sim_ratio_map = heatmap(calc_heatmap_ratio(real_map, sim_map), floorlist, stringlist)
-real_heatmap = heatmap(real_map, floorlist, stringlist)
-eff_heatmap = heatmap(sim_eff_map, floorlist, stringlist)
-
-#eff_heatmap.plot_heatmap(indices, "Map of the efficiencies")
-#sim_eff_heatmap.plot_heatmap(indices, "Average efficiencies of DOMs, simulated data")
-
-#sim_ratio_map.compare_upper_lower_pmts_heatmap(indices, "Ratio of upper/lower PMTs ratio of simulated/real rates")
-#sim_ratio_map.plot_heatmap(indices, "Ratio of simulated vs real rates of PMTs per DOM")
-#real_heatmap.plot_heatmap(indices, pmt_letters, "Sum of all hits per DOM for indicated PMT group, real data")
-#Create new dataset by laying the efficiency map over the ratio map 
-
-sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
-sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
-sim_ratio_eff_map[1, :, :, :] = eff_heatmap.heatmap[:, :, :]
 
 
 def plot_ratio_eff(sim_ratio_eff_map, indices):
