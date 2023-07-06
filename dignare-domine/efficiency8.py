@@ -285,6 +285,11 @@ class heatmap():
 
         return 0;
 
+    def get_avg_std(self, indices):
+        mean = np.nanmean(self.heatmap, axis = (1, 2))
+        std = np.nanstd(self.heatmap, axis = (1, 2))
+        return mean, std
+
     
 
     def compare_upper_lower_pmts_heatmap(self, indices, title):

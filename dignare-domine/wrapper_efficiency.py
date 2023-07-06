@@ -46,6 +46,9 @@ real_heatmap.plot_heatmap(indices, pmt_letters, "Sum of all hits per DOM for ind
 real_new_heatmap.plot_heatmap(indices, pmt_letters, "Sum of all hits per DOM for indicated PMT group, real data, new PMTs", save_map = "plots")
 #Create new dataset by laying the efficiency map over the ratio map 
 
+
+print(real_heatmap.get_avg_std(indices))
+print(real_new_heatmap.get_avg_std(indices))
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
 sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
 sim_ratio_eff_map[1, :, :, :] = eff_heatmap.heatmap[:, :, :]
