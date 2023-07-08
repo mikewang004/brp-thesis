@@ -36,7 +36,7 @@ class map_hit_data():
 
     """Workflow as follows: data loadin is as 2d array with column as above. Then data gets appended, upon which the array gets transformed to 3d 
     with the pmt number being the 3rd dimension. Then data reorganised into heatmap."""
-    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = 1, floor_str_hit = None):
+    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floor_str_hit = None):
         self.modid_map = modid_map
         self.eff_list = eff_list    
         self.pmt_serial_map = pmt_serial_map; self.magic_number = magic_number
@@ -46,7 +46,8 @@ class map_hit_data():
             self.append_pmt_serials()
             self.mod_id_to_floor_string()
             self.pmt_no_to_ring_letter()
-            self.apply_pmt_mask(new_versions = new_versions)
+            if new_versions != None: 
+                self.apply_pmt_mask(new_versions = new_versions)
         else:
             self.floor_str_hit = floor_str_hit
 
@@ -204,22 +205,17 @@ class heatmap():
         self.floorlist = floorlist
         self.stringlist = stringlist
 
-    def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None):
-        #custom_colorscale = [
-        #    [1, 'rgb(255, 255, 0)'],
-        #    [0, 'rgb(0, 0, 255)']
-        #]
-        #custom_colorscale = [
-        #    [0, 'rgb(50, 205, 173)'],
-        #    [1, 'rgb(205, 50, 82)']
-        #]
+    def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None, zmax_array = None, zmin_array = None):
         colorscale = colors.sequential.Sunset
         colorscale = colorscale[::-1]
         print(colorscale[0])
-        # Set a specific dark blue color for z=0
-        #colorscale[0] = 'rgb(17, 84, 1)'
-        #colorscale[0] = 'rgb(167, 2, 116)'
         colorscale[0] = '#665679'
+        
+        if zmax_array is None and zmin_array is None:
+            zmin_present, zmax_present = False, False
+            zmax_array, zmin_array = np.zeros(len(indices)-1), np.zeros(len(indices)-1)
+        else:
+            zmin_present, zmax_present = True, True
         for i in range(0, len(indices)-1):
             heatmap_current = self.heatmap[i, :, :]
             annotation_text = np.round(heatmap_current, 4)
@@ -238,7 +234,16 @@ class heatmap():
                     dtick = 1
                 ),
         )
-            zmax, zmin = np.nanmax(heatmap_current), np.nanmin(heatmap_current[heatmap_current != 0])
+            if zmax_present == False:
+                zmax = np.nanmax(heatmap_current)
+                zmax_array[i] = zmax
+            else:
+                zmax = zmax_array[i]
+            if zmin_present == False:
+                zmin = np.nanmin(heatmap_current[heatmap_current != 0])
+                zmin_array[i] = zmin
+            else:
+                zmin = zmin_array[i]
             fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin, zmax=zmax), layout = layout)
             #print("Average of hits is %f +- %f" %(np.nanmean(self.heatmap[i, :, :]), np.nanstd(self.heatmap[i, :, :])))
             #fig.show()
@@ -250,7 +255,8 @@ class heatmap():
                 pio.write_image(fig, write_path)
             else:
                 pass
-        return 0;
+        print(zmax_array, zmin_array)
+        return zmax_array, zmin_array
     
     def plot_heatmap_matplotlib(self, indices, title):
         for i in range(0, len(indices) - 1):
