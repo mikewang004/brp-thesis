@@ -61,6 +61,9 @@ real_heatmap.plot_heatmap(indices, pmt_letters,
         save_map = "plots/all-pmts", zmax_array= zmax_array, zmin_array = zmin_array)
 #Create new dataset by laying the efficiency map over the ratio map 
 
+sim_ratio_map.plot_heatmap(indices, pmt_letters, "Ratio of real vs simulated rates of PMTs per DOM", save_map = "plots/sim-vs-real")
+eff_heatmap.plot_heatmap(indices, pmt_letters, "Efficiencies of PMTs per DOM, real data", save_map = "plots/sim-vs-real")
+
 
 sim_ratio_eff_map = np.zeros([2,sim_eff_map.shape[0], sim_eff_map.shape[1], sim_eff_map.shape[2]])
 sim_ratio_eff_map[0, :, :, :] = sim_ratio_map.heatmap[:, :, :]
@@ -74,6 +77,9 @@ new_pmt_mean, new_pmt_std = real_new_heatmap.get_avg_std(indices)
 
 sim_old_pmt_mean, sim_old_pmt_std = sim_old_heatmap.get_avg_std(indices)
 sim_new_pmt_mean, sim_new_pmt_std = sim_new_heatmap.get_avg_std(indices)
+
+plot_ratio_eff_per_group(sim_ratio_eff_map, indices, "Efficiencies vs ratio of real vs sim rates of PMTs per DOM", 
+        stringlist, save_map = "plots/eff-vs-hits")
 
 #Now create subplots 
 

@@ -206,6 +206,7 @@ class heatmap():
         self.stringlist = stringlist
 
     def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None, zmax_array = None, zmin_array = None):
+        """Manually set pmt_letters to none if groups are different"""
         colorscale = colors.sequential.Sunset
         colorscale = colorscale[::-1]
         print(colorscale[0])
@@ -217,10 +218,14 @@ class heatmap():
         else:
             zmin_present, zmax_present = True, True
         for i in range(0, len(indices)-1):
+            if pmt_letters is None:
+                title_complete = title
+            else:
+                title_complete = title + ", PMT group %s" %((pmt_letters[i]))
             heatmap_current = self.heatmap[i, :, :]
             annotation_text = np.round(heatmap_current, 4)
             layout = go.Layout(
-                title = title + ", PMT group %s" %((pmt_letters[i])),
+                title = title_complete,
                 xaxis = dict(
                     tickmode = "array",
                     tickvals = np.arange(len(self.stringlist)),
@@ -332,7 +337,7 @@ class heatmap():
 
 
 def calc_heatmap_ratio(heatmap_real, heatmap_sim):
-    return heatmap_sim/heatmap_real
+    return heatmap_real/heatmap_sim
     #return heatmap_real/heatmap_sim
 
 
@@ -345,7 +350,21 @@ pmt_letters = ["A", "B", "C", "D", "E", "F"]
 #real_map, floorlist, stringlist = data_real.export_heatmap(indices)
 
 
-
+def plot_ratio_eff_per_group(sim_ratio_eff_map, indices, title, stringlist, save_map = None):
+    """This is to plot efficiency vs simulated/real hit ratio for all pmt groups seperately"""
+    for i in range(0, len(indices)-1):
+        plt.figure(figsize = (10, 10))
+        for l in range(0, sim_ratio_eff_map.shape[3]):
+            plt.scatter(sim_ratio_eff_map[0, i, :, l], sim_ratio_eff_map[1, i, :, l], label = "string %i" %(stringlist[l]))
+        plt.xlabel("simulated/real hit rates ratio")
+        plt.ylabel("efficiency")
+        plt.title("DOMs efficiency vs simulated/real hit rate ratio, PMT group %s" %((pmt_letters[i])))
+        plt.legend()
+        if save_map == None:
+            write_path = str('%s_pmt-ring-%s.pdf' %(title.replace(" ", "-"), pmt_letters[i]))
+        else:
+            write_path = save_map + str('/%s_pmt-ring-%s.pdf' %(title.replace(" ", "-"), pmt_letters[i]))
+        plt.savefig(write_path)
 
 def plot_ratio_eff(sim_ratio_eff_map, indices):
     """This is to plot efficiency vs simulated/real hit ratio for all strings seperately"""
