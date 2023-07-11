@@ -188,7 +188,7 @@ class map_hit_data():
         for m in range(0, len(indices)-1):
             pmt_group_pairs = pmt_group_mean[:, m, :]
             pmt_group_mean_sorted[:, m, :] = self.heatmap_averages_single_loop(pmt_group_pairs) #Sorts the thing on string and floor so that they are in sequence. 
-        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0])
+        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]).tolist(); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0]).tolist()
         heatmap = np.zeros([len(indices)-1, len(floorlist), len(np.unique(stringlist))])
         #Now get heatmap for each group
         for i in range(0, len(indices)-1):
@@ -204,8 +204,32 @@ class heatmap():
         self.heatmap = heatmap
         self.floorlist = floorlist
         self.stringlist = stringlist
+        
 
-    def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None, zmax_array = None, zmin_array = None):
+    def append_mean_row_column(self, indices):
+        """Appends the mean to all rows and columns in the heatmap. Also appends floorlist and stringlist 
+        to reflect this."""
+        floorlist = self.floorlist; stringlist = self.stringlist
+        stringlist.append("mean")
+        floorlist.append("mean")
+        string_mean = np.nanmean(self.heatmap, axis = 1); floor_mean = np.nanmean(self.heatmap, axis = 2)
+        #print(string_mean)
+        new_heatmap = np.zeros([self.heatmap.shape[0], self.heatmap.shape[1]+1, self.heatmap.shape[2]+1])
+        new_heatmap[:, :-1, :-1] = self.heatmap
+        new_heatmap[:, -1, :-1] = string_mean; 
+        new_heatmap[:, :-1, -1] = floor_mean
+        new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
+        return new_heatmap, floorlist, stringlist
+
+    def delete_mean_row_column(self, indices):
+        """Deletes the mean of all rows and columns in the heatmap. Reverses above function essentially."""
+        old_heatmap = self.heatmap[:, :-1, :-1]
+        floorlist = self.floorlist[:-1]; stringlist = self.stringlist[:-1]
+        print(old_heatmap.shape)
+        return old_heatmap, floorlist, stringlist
+        
+
+    def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None, zmax_array = None, zmin_array = None, include_mean = False):
         """Manually set pmt_letters to none if groups are different"""
         colorscale = colors.sequential.Sunset
         colorscale = colorscale[::-1]
@@ -217,6 +241,8 @@ class heatmap():
             zmax_array, zmin_array = np.zeros(len(indices)-1), np.zeros(len(indices)-1)
         else:
             zmin_present, zmax_present = True, True
+        if include_mean == True:
+            self.heatmap, self.floorlist, self.stringlist = self.append_mean_row_column(indices)
         for i in range(0, len(indices)-1):
             if pmt_letters is None:
                 title_complete = title
@@ -261,6 +287,8 @@ class heatmap():
             else:
                 pass
         print(zmax_array, zmin_array)
+        if include_mean == True: 
+            self.heatmap, self.floorlist, self.stringlist = self.delete_mean_row_column(indices)
         return zmax_array, zmin_array
     
     def plot_heatmap_matplotlib(self, indices, title):
@@ -424,6 +452,9 @@ def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
                 %(indices[k], indices[k+1]-1,np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
             print("For PMTs %i-%i the efficiency mean is %f +- %f." 
                 %(indices[k], indices[k+1]-1,np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
+
+def err_prop_sum(dx, dy):
+    return np.sqrt(dx**2 + dy**2)
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 

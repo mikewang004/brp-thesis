@@ -55,10 +55,11 @@ sim_new_heatmap = heatmap(sim_new_map, floorlist, stringlist)
 #real_heatmap.plot_heatmap(indices, pmt_letters, "Sum of all hits per DOM for indicated PMT group, real data, old PMTs", save_map = "plots")
 #real_new_heatmap.plot_heatmap(indices, pmt_letters, "Sum of all hits per DOM for indicated PMT group, real data, new PMTs", save_map = "plots")
 zmax_array, zmin_array = sim_heatmap.plot_heatmap(indices, pmt_letters, 
-        "Sum of all hits per DOM for indicated PMT group, sim. data", save_map = "plots/all-pmts")
+        "Sum of all hits per DOM for indicated PMT group, sim. data", save_map = "plots/all-pmts", include_mean= True)
 real_heatmap.plot_heatmap(indices, pmt_letters, 
         "Sum of all hits per DOM for indicated PMT group, real data", 
-        save_map = "plots/all-pmts", zmax_array= zmax_array, zmin_array = zmin_array)
+        save_map = "plots/all-pmts", zmax_array= zmax_array, zmin_array = zmin_array, include_mean= True)
+        
 #Create new dataset by laying the efficiency map over the ratio map 
 
 sim_ratio_map.plot_heatmap(indices, pmt_letters, "Ratio of real vs simulated rates of PMTs per DOM", save_map = "plots/sim-vs-real")
@@ -78,13 +79,13 @@ new_pmt_mean, new_pmt_std = real_new_heatmap.get_avg_std(indices)
 sim_old_pmt_mean, sim_old_pmt_std = sim_old_heatmap.get_avg_std(indices)
 sim_new_pmt_mean, sim_new_pmt_std = sim_new_heatmap.get_avg_std(indices)
 
-plot_ratio_eff_per_group(sim_ratio_eff_map, indices, "Efficiencies vs ratio of real vs sim rates of PMTs per DOM", 
-        stringlist, save_map = "plots/eff-vs-hits")
+#plot_ratio_eff_per_group(sim_ratio_eff_map, indices, "Efficiencies vs ratio of real vs sim rates of PMTs per DOM", 
+#        stringlist, save_map = "plots/eff-vs-hits")
 
 #Now create subplots 
 
-fig, axs = plt.subplots(2, 2, sharey=True, figsize = (10, 10))
-plt.setp(axs, xticks = letters_ints, xticklabels = pmt_letters, ylabel= "mean hit rate", xlabel="DOM PMT ring")
+fig, axs = plt.subplots(2, 2, figsize = (20, 20))
+plt.setp(axs, xticks = letters_ints, xticklabels = pmt_letters, ylabel= "mean hit rate", xlabel="PMT ring", ylim = (-750, 3200))
 axs[0, 0].errorbar(letters_ints, old_pmt_mean, yerr = old_pmt_std, fmt="o")
 axs[1, 0].errorbar(letters_ints, new_pmt_mean, yerr = new_pmt_std, fmt="o")
 axs[0, 1].errorbar(letters_ints, sim_old_pmt_mean, yerr = sim_old_pmt_std, fmt="o", color="orange")
@@ -97,5 +98,22 @@ axs[1, 0].set_title("Real data, new PMTs (model R14374)")
 axs[1, 1].set_title("Simulated data, new PMTs (model R14374)")
 plt.subplots_adjust(hspace=0.4)
 plt.savefig("plots/mean-sum-doms-pmt-models.pdf")
-#plt.show()
+plt.clf()
+plt.close()
+
+#Now do the same to show difference between the two types PMTs 
+fig, axs = plt.subplots(2, 2, figsize = (20, 20))
+plt.setp(axs, xticks = letters_ints, xticklabels = pmt_letters, ylabel= "mean hit rate", xlabel="PMT ring", ylim = (-2000, 3200))
+axs[0, 0].errorbar(letters_ints, np.abs(old_pmt_mean - new_pmt_mean), yerr = err_prop_sum(old_pmt_std,new_pmt_std),  fmt="o")
+axs[0, 1].errorbar(letters_ints, np.abs(old_pmt_mean - sim_old_pmt_mean), yerr = err_prop_sum(old_pmt_std, sim_old_pmt_std), fmt="o")
+axs[1, 0].errorbar(letters_ints, np.abs(new_pmt_mean - sim_new_pmt_mean), yerr = err_prop_sum(sim_new_pmt_std, sim_new_pmt_std), fmt="o")
+axs[1, 1].errorbar(letters_ints, np.abs(sim_old_pmt_mean - sim_new_pmt_mean), yerr = err_prop_sum(sim_old_pmt_std,sim_new_pmt_std),  fmt="o")
+
+fig.suptitle("Differences between the mean of the sum of the DOM hit rate seperated by ring") 
+axs[0, 0].set_title("Real data, old and new PMTs compared")
+axs[0, 1].set_title("Real and simulated data compared, old PMTs")
+axs[1, 0].set_title("Real and simulated data compared, new PMTs")
+axs[1, 1].set_title("Simulated data, old and new PMTs compared")
+plt.subplots_adjust(hspace=0.4)
+plt.savefig("plots/mean-diff-sum-doms-pmt-models.pdf")
 
