@@ -209,7 +209,7 @@ class heatmap():
     def append_mean_row_column(self, indices):
         """Appends the mean to all rows and columns in the heatmap. Also appends floorlist and stringlist 
         to reflect this."""
-        floorlist = self.floorlist; stringlist = self.stringlist
+        floorlist = self.floorlist.copy(); stringlist = self.stringlist.copy()
         stringlist.append("mean")
         floorlist.append("mean")
         string_mean = np.nanmean(self.heatmap, axis = 1); floor_mean = np.nanmean(self.heatmap, axis = 2)
@@ -227,13 +227,30 @@ class heatmap():
         floorlist = self.floorlist[:-1]; stringlist = self.stringlist[:-1]
         print(old_heatmap.shape)
         return old_heatmap, floorlist, stringlist
+
+    def summarise_per_ring(self, indices, pmt_letters, string = True):
+        """Returns mean heatmap of either floor of string along with floor or stringlist."""
+        heatmap, __, __ = self.append_mean_row_column(indices)
+        if string == True: 
+            heatmap_summarised = np.zeros([len(pmt_letters), len(self.stringlist)])
+            x_ax = self.stringlist
+        else:
+            heatmap_summarised = np.zeros([len(pmt_letters), len(self.floorlist)])
+            x_ax = self.floorlist
+        heatmap_summarised = np.zeros([len(pmt_letters), len(x_ax)])
         
+        if string == True:
+             heatmap_summarised = heatmap[:, -1, :-1]
+        else:
+             heatmap_summarised = heatmap[:, :-1, -1]
+        return heatmap_summarised, x_ax
+        
+
 
     def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None, zmax_array = None, zmin_array = None, include_mean = False):
         """Manually set pmt_letters to none if groups are different"""
         colorscale = colors.sequential.Sunset
         colorscale = colorscale[::-1]
-        print(colorscale[0])
         colorscale[0] = '#665679'
         
         if zmax_array is None and zmin_array is None:
@@ -242,26 +259,28 @@ class heatmap():
         else:
             zmin_present, zmax_present = True, True
         if include_mean == True:
-            self.heatmap, self.floorlist, self.stringlist = self.append_mean_row_column(indices)
+            heatmap, floorlist, stringlist = self.append_mean_row_column(indices)
+        else:
+            heatmap, floorlist, stringlist = self.heatmap, self.floorlist, self.stringlist
         for i in range(0, len(indices)-1):
             if pmt_letters is None:
                 title_complete = title
             else:
                 title_complete = title + ", PMT group %s" %((pmt_letters[i]))
-            heatmap_current = self.heatmap[i, :, :]
+            heatmap_current = heatmap[i, :, :]
             annotation_text = np.round(heatmap_current, 4)
             layout = go.Layout(
                 title = title_complete,
                 xaxis = dict(
                     tickmode = "array",
-                    tickvals = np.arange(len(self.stringlist)),
-                    ticktext = self.stringlist,
+                    tickvals = np.arange(len(stringlist)),
+                    ticktext = stringlist,
                     dtick = 1
                 ),
                 yaxis = dict(
                     tickmode = "array",
-                    tickvals = np.arange(len(self.floorlist)),
-                    ticktext = self.floorlist,
+                    tickvals = np.arange(len(floorlist)),
+                    ticktext = floorlist,
                     dtick = 1
                 ),
         )
@@ -286,10 +305,45 @@ class heatmap():
                 pio.write_image(fig, write_path)
             else:
                 pass
-        print(zmax_array, zmin_array)
-        if include_mean == True: 
-            self.heatmap, self.floorlist, self.stringlist = self.delete_mean_row_column(indices)
+        #print(zmax_array, zmin_array)
+        #if include_mean == True: 
+        #    self.heatmap, self.floorlist, self.stringlist = self.delete_mean_row_column(indices)
         return zmax_array, zmin_array
+
+    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", save_map=None, string = True, edit_heatmap = False):
+        """Summarises the mean per string or per floor into a single heatmap. If string = false then floor plot"""
+        colorscale = colors.sequential.Sunset
+        colorscale = colorscale[::-1]
+        print(colorscale[0])
+        colorscale[0] = '#665679'
+        heatmap_summarised, x_ax = self.summarise_per_ring(indices, pmt_letters, string)
+        annotation_text = np.round(heatmap_summarised, 4)
+        layout = go.Layout(
+            title = title,
+            xaxis = dict(
+                tickmode = "array",
+                tickvals = np.arange(len(x_ax)),
+                ticktext = x_ax,
+                dtick = 1
+            ),
+            yaxis = dict(
+                tickmode = "array",
+                tickvals = np.arange(len(pmt_letters)),
+                ticktext = pmt_letters,
+                dtick = 1
+            ),
+        )
+        zmax = np.nanmax(heatmap_summarised); zmin = np.nanmin(heatmap_summarised)
+        fig = go.Figure(data = go.Heatmap(z=heatmap_summarised, text = annotation_text, 
+            texttemplate="%{text}", colorscale=colorscale, zmin=zmin, zmax=zmax), layout = layout)
+        if save == "Yes":
+            if save_map == None:
+                write_path = str('%s.pdf' %(title.replace(" ", "-")))
+            else:
+                write_path = save_map + str('/%s.pdf' %(title.replace(" ", "-")))
+                pio.write_image(fig, write_path)
+        #self.heatmap, __, __ = self.delete_mean_row_column(indices)
+        return 0;
     
     def plot_heatmap_matplotlib(self, indices, title):
         for i in range(0, len(indices) - 1):
