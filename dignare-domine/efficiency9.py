@@ -6,6 +6,7 @@ Created on Mon May  8 15:54:39 2023
 @author: mike
 
 This file should also take into account the two different PMT versions and include a mapping per ring in the DOM. 
+Streamlined version of 'efficiency8.py', not backward compatitble.
 """
 
 import numpy as np
@@ -27,6 +28,10 @@ eff_list = np.loadtxt("data/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
 pmt_ring_map = np.loadtxt("../pmt-info/pmt-ring.txt", skiprows = 2, usecols = [0,1,2])
 magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
+
+indices = [0, 1, 7, 13, 19, 25, 31]
+pmt_letters = ["A", "B", "C", "D", "E", "F"]
+floorlist = np.loadtxt("data/floorlist.txt"); stringlist = np.loadtxt("data/stringlist.txt")
 
 
 class map_hit_data():
@@ -105,7 +110,7 @@ class map_hit_data():
     def apply_pmt_mask(self, new_versions=1):
         """Filters for either new pmt version or the old one. Data located in column no 8.
         If new_versions = 1, then only new versions are returned, otherwise only old versions returned."""
-        new_floor_str_hit = self.floor_str_hit
+        new_floor_str_hit = self.floor_str_hit.copy()
         for i in range(0, 31):
             current_floor_str_hit = self.floor_str_hit[:, i, :]
             mask = self.floor_str_hit[:, i, 7].astype(int)
@@ -193,17 +198,21 @@ class map_hit_data():
         #Now get heatmap for each group
         for i in range(0, len(indices)-1):
             heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff)
-        np.savetxt("pmt-groups-mean-sorted-debug.txt", pmt_group_mean_sorted[:, 0, :])
-        return heatmap, floorlist, stringlist 
+        return heatmap
     
 
+def speedrun_heatmap(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floorlist = floorlist, stringlist = stringlist, int_rates_or_eff = 4):
+    hit_runs_arr = map_hit_data(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions= new_versions)
+    return heatmap(hit_runs_arr.export_heatmap(indices, int_rates_or_eff = int_rates_or_eff))
 
 class heatmap():
     """Class to generate heatmap plots with string and/or floor information. Also useful to perform heatmap operations with."""
-    def __init__(self, heatmap, floorlist, stringlist):
+    def __init__(self, heatmap, floorlist = floorlist, stringlist = stringlist, x_ax = None):
         self.heatmap = heatmap
-        self.floorlist = floorlist
-        self.stringlist = stringlist
+        self.floorlist = floorlist.tolist()
+        self.stringlist = stringlist.tolist()
+        if x_ax != None:
+            self.x_ax = x_ax
         
 
     def append_mean_row_column(self, indices):
@@ -232,10 +241,8 @@ class heatmap():
         """Returns mean heatmap of either floor of string along with floor or stringlist."""
         heatmap, __, __ = self.append_mean_row_column(indices)
         if string == True: 
-            heatmap_summarised = np.zeros([len(pmt_letters), len(self.stringlist)])
             x_ax = self.stringlist
         else:
-            heatmap_summarised = np.zeros([len(pmt_letters), len(self.floorlist)])
             x_ax = self.floorlist
         heatmap_summarised = np.zeros([len(pmt_letters), len(x_ax)])
         
@@ -243,7 +250,21 @@ class heatmap():
              heatmap_summarised = heatmap[:, -1, :-1]
         else:
              heatmap_summarised = heatmap[:, :-1, -1]
-        return heatmap_summarised, x_ax``
+        return heatmap_summarised, x_ax
+
+    def summarise_per_ring_part(self, indices, pmt_letters, start_index, stop_index, string = True):
+        if string == True:
+            string_start = start_index; string_stop = stop_index; floor_start, floor_stop = 0, 18
+            axis = 1
+        else:
+            string_start, string_stop = 0, 20; floor_start, floor_stop = string_start, string_stop
+            axis = 2
+        mean_heatmap = np.nanmean(self.heatmap[:, floor_start:floor_stop, string_start:string_stop], axis = axis)
+        return mean_heatmap
+
+    def export_summarised_heatmap(self, indices, pmt_letters, string = True):
+        heatmap_summarised, __ =  self.summarise_per_ring(indices, pmt_letters, string)
+        return heatmap_summarised
         
 
 
@@ -310,13 +331,17 @@ class heatmap():
         #    self.heatmap, self.floorlist, self.stringlist = self.delete_mean_row_column(indices)
         return zmax_array, zmin_array
 
-    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", save_map=None, string = True, edit_heatmap = False):
-        """Summarises the mean per string or per floor into a single heatmap. If string = false then floor plot"""
+    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", save_map=None, string = True, edit_heatmap = False, x_ax = None):
+        """Summarises the mean per string or per floor into a single heatmap. If string = false then floor plot.
+        If x_ax != None then already assumsed self.summarise_per_ring executed"""
         colorscale = colors.sequential.Sunset
         colorscale = colorscale[::-1]
         print(colorscale[0])
         colorscale[0] = '#665679'
-        heatmap_summarised, x_ax = self.summarise_per_ring(indices, pmt_letters, string)
+        if x_ax == None:
+            heatmap_summarised, x_ax = self.summarise_per_ring(indices, pmt_letters, string)
+        else:
+            heatmap_summarised = self.heatmap; x_ax = self.x_ax
         annotation_text = np.round(heatmap_summarised, 4)
         layout = go.Layout(
             title = title,
@@ -422,93 +447,15 @@ def calc_heatmap_ratio(heatmap_real, heatmap_sim):
     return heatmap_real/heatmap_sim
     #return heatmap_real/heatmap_sim
 
-
-
-
-#indices = [0, 12, 30]
-indices = [0, 1, 7, 13, 19, 25, 31]
-pmt_letters = ["A", "B", "C", "D", "E", "F"]
-#data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
-#real_map, floorlist, stringlist = data_real.export_heatmap(indices)
-
-
-def plot_ratio_eff_per_group(sim_ratio_eff_map, indices, title, stringlist, save_map = None):
-    """This is to plot efficiency vs simulated/real hit ratio for all pmt groups seperately"""
-    for i in range(0, len(indices)-1):
-        plt.figure(figsize = (10, 10))
-        for l in range(0, sim_ratio_eff_map.shape[3]):
-            plt.scatter(sim_ratio_eff_map[0, i, :, l], sim_ratio_eff_map[1, i, :, l], label = "string %i" %(stringlist[l]))
-        plt.xlabel("simulated/real hit rates ratio")
-        plt.ylabel("efficiency")
-        plt.title("DOMs efficiency vs simulated/real hit rate ratio, PMT group %s" %((pmt_letters[i])))
-        plt.legend()
-        if save_map == None:
-            write_path = str('%s_pmt-ring-%s.pdf' %(title.replace(" ", "-"), pmt_letters[i]))
-        else:
-            write_path = save_map + str('/%s_pmt-ring-%s.pdf' %(title.replace(" ", "-"), pmt_letters[i]))
-        plt.savefig(write_path)
-
-def plot_ratio_eff(sim_ratio_eff_map, indices):
-    """This is to plot efficiency vs simulated/real hit ratio for all strings seperately"""
-    #for k in range(0, 3):
-    for k in range(0, sim_ratio_eff_map.shape[3]):
-        plt.figure()
-        for l in range(0, len(indices)-1):
-    #    for j in range(0, sim_ratio_eff_map.shape[3]):
-    #        for i in range(0, sim_ratio_eff_map.shape[2]): #Loops per string over floors
-    #            pass
-    #            plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :])
-        #plt.scatter(sim_ratio_eff_map[0, k, :, 1], sim_ratio_eff_map[1, k, :, 1], label = "PMTs %i-%i" %(indices[k], indices[k + 1]))
-        #plt.scatter(sim_ratio_eff_map[0,:,:,k], sim_ratio_eff_map[1,:,:,k], label="string %i" %(stringlist[k]))
-            plt.scatter(sim_ratio_eff_map[0, l, :, k], sim_ratio_eff_map[1, l, :, k], label = "PMTs %i-%i" %(indices[l], indices[l + 1]))
-        plt.ylim(0.5, 1.15)
-        plt.xlim(1.2, 1.5)
-        plt.xlabel("simulated/real hit rates ratio")
-        plt.ylabel("efficiency")
-        plt.title("DOMs efficiency vs simulated/real hit rate ratio, string %i" %(stringlist[k]))
-        plt.legend()
-        #plt.savefig("str_plots/t0-ratio_eff-str-%i.pdf" %(stringlist[k]))
-        plt.show()
-
-def plot_ratio_eff_one_plot(sim_ratio_eff_map, indices):
-    err_colors = ["m", "c"]
-    for k in range(0, len(indices)-1):
-        plt.scatter(sim_ratio_eff_map[0,k, :, :], sim_ratio_eff_map[1,k, :, :], label = "PMTs %i-%i" %(indices[k], indices[k+1]))
-    for k in range(0, len(indices)-1):
-        if k == len(indices)-2:
-            plt.errorbar(np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanmean(sim_ratio_eff_map[1,k, :, :]), 
-                        xerr = np.nanstd(sim_ratio_eff_map[0, k, :, :]),
-                        yerr = np.nanstd(sim_ratio_eff_map[1, k, :, :]), 
-                        fmt = "o", color = err_colors[k],
-                        label = "PMTs %i-%i, average" %(indices[k], indices[k+1]))
-        else:
-            plt.errorbar(np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanmean(sim_ratio_eff_map[1,k, :, :]), 
-                        xerr = np.nanstd(sim_ratio_eff_map[0, k, :, :]),
-                        yerr = np.nanstd(sim_ratio_eff_map[1, k, :, :]), 
-                        fmt = "o", color = err_colors[k],
-                        label = "PMTs %i-%i, average" %(indices[k], indices[k+1]-1))
-    plt.ylim(0.5, 1.15)
-    plt.xlim(1.2, 1.5)
-    plt.xlabel("simulated/real hit rates ratio")
-    plt.ylabel("efficiency")
-    plt.title("DOMs efficiency vs simulated/real hit rate ratio, all strings")
-    plt.legend()
-    plt.savefig("str_plots/t0-ratio_eff-str-fixed.pdf" %(stringlist[k]))
-    plt.show()
-    for k in range(0, len(indices)-1):
-        if k == len(indices)-2:
-            print("For PMTs %i-%i the simulated/real hit rates ratio mean is %f +- %f." 
-                %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
-            print("For PMTs %i-%i the efficiency mean is %f +- %f." 
-                %(indices[k], indices[k+1],np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
-        else:
-            print("For PMTs %i-%i the simulated/real hit rates ratio mean is %f +- %f." 
-                %(indices[k], indices[k+1]-1,np.nanmean(sim_ratio_eff_map[0,k, :, :]), np.nanstd(sim_ratio_eff_map[0,k, :, :])))
-            print("For PMTs %i-%i the efficiency mean is %f +- %f." 
-                %(indices[k], indices[k+1]-1,np.nanmean(sim_ratio_eff_map[1,k, :, :]), np.nanstd(sim_ratio_eff_map[1,k, :, :])))
-
-def err_prop_sum(dx, dy):
-    return np.sqrt(dx**2 + dy**2)
+def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_letters, string = True, save = "Yes", save_map=None,
+    start_index = None, stop_index = None):
+    """Plots heatmap of a ratio of the numerator map over the denominator map. 
+    Try new/better over old/worse maps."""
+    exportmap_num, x_ax = heatmap_num.summarise_per_ring(indices, pmt_letters, string = string)
+    exportmap_denom = heatmap_denom.export_summarised_heatmap(indices, pmt_letters, string = string)
+    heatmap_ratio = heatmap(exportmap_num / exportmap_denom, x_ax = x_ax)
+    print(x_ax)
+    heatmap_ratio.plot_heatmap_summarised_ring(indices, pmt_letters, title, save_map = save_map, string = string, x_ax = x_ax)
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 
