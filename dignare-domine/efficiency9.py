@@ -215,12 +215,21 @@ class heatmap():
             self.x_ax = x_ax
         
 
-    def append_mean_row_column(self, indices):
+    def append_mean_row_column(self, indices, append_list_1 = None, append_list_2 = None):
         """Appends the mean to all rows and columns in the heatmap. Also appends floorlist and stringlist 
         to reflect this."""
-        floorlist = self.floorlist.copy(); stringlist = self.stringlist.copy()
-        stringlist.append("mean")
-        floorlist.append("mean")
+        if append_list_1 == None and append_list_2 == None:
+            floorlist = self.floorlist.copy(); stringlist = self.stringlist.copy()
+            stringlist.append("mean")
+            floorlist.append("mean")
+        else:
+            if append_list_1 != list:
+                append_list_1 = append_list_1.tolist()
+            if append_list_2 != list:
+                append_list_2 = append_list_2.tolist()
+            append_list_1.append("mean")
+            append_list_2.append("mean")
+                
         string_mean = np.nanmean(self.heatmap, axis = 1); floor_mean = np.nanmean(self.heatmap, axis = 2)
         #print(string_mean)
         new_heatmap = np.zeros([self.heatmap.shape[0], self.heatmap.shape[1]+1, self.heatmap.shape[2]+1])
@@ -228,7 +237,10 @@ class heatmap():
         new_heatmap[:, -1, :-1] = string_mean; 
         new_heatmap[:, :-1, -1] = floor_mean
         new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
-        return new_heatmap, floorlist, stringlist
+        if append_list_1 == None and append_list_2 == None:
+            return new_heatmap, floorlist, stringlist
+        else:
+            return new_heatmap, append_list_1, append_list_2
 
     def delete_mean_row_column(self, indices):
         """Deletes the mean of all rows and columns in the heatmap. Reverses above function essentially."""
@@ -298,7 +310,7 @@ class heatmap():
             heatmap_current = heatmap[i, :, :]
             annotation_text = np.round(heatmap_current, 4)
             layout = go.Layout(
-                title = title_complete,
+                title = title_complete, 
                 xaxis = dict(
                     tickmode = "array",
                     tickvals = np.arange(len(stringlist)),
@@ -338,7 +350,9 @@ class heatmap():
         #    self.heatmap, self.floorlist, self.stringlist = self.delete_mean_row_column(indices)
         return zmax_array, zmin_array
 
-    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", save_map=None, string = True, edit_heatmap = False, x_ax = None):
+
+
+    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", save_map=None, string = True, edit_heatmap = False, x_ax = None, include_mean = False):
         """Summarises the mean per string or per floor into a single heatmap. If string = false then floor plot.
         If x_ax != None then already assumsed self.summarise_per_ring executed"""
         colorscale = colors.sequential.Sunset
@@ -448,7 +462,35 @@ class heatmap():
             fig.show()
 
 
-
+def plot_heatmap_ultra_basic( heatmap, title, x_ax, y_ax, save="Yes", save_map = None):
+    colorscale = colors.sequential.Sunset
+    colorscale = colorscale[::-1]
+    colorscale[0] = '#665679'
+    annotation_text = np.round(heatmap, 4)
+    layout = go.Layout(
+        title = title,
+        xaxis = dict(
+            tickmode = "array",
+            tickvals = np.arange(len(x_ax)),
+            ticktext = x_ax,
+            dtick = 1
+        ),
+        yaxis = dict(
+            tickmode = "array",
+            tickvals = np.arange(len(y_ax)),
+            ticktext = y_ax,
+            dtick = 1
+        ),
+)
+    fig = go.Figure(data = go.Heatmap(z=heatmap, text = annotation_text, texttemplate="%{text}", colorscale=colorscale), layout = layout)
+    #fig.show()
+    if save == "Yes":
+        if save_map == None:
+            write_path = str('%s.pdf' %(title.replace(" ", "-")))
+        else:
+            write_path = save_map + str('/%s.pdf' %(title.replace(" ", "-")))
+        pio.write_image(fig, write_path)
+    return 0;
 
 def calc_heatmap_ratio(heatmap_real, heatmap_sim):
     return heatmap_real/heatmap_sim
@@ -458,6 +500,7 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
     start_index = None, stop_index = None):
     """Plots heatmap of a ratio of the numerator map over the denominator map. 
     Try new/better over old/worse maps."""
+    #TODO append hereto the mean of each row/string/whaterever
     if start_index != None and stop_index != None: 
         exportmap_num, x_ax = heatmap_num.summarise_per_ring_part(indices, pmt_letters, start_index, stop_index, slice_string = slice_string)
         exportmap_denom, __ = heatmap_denom.summarise_per_ring_part(indices, pmt_letters, start_index, stop_index, slice_string = slice_string)
@@ -465,7 +508,10 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
         exportmap_num, x_ax = heatmap_num.summarise_per_ring(indices, pmt_letters, string=plot_string)
         exportmap_denom, __ = heatmap_denom.summarise_per_ring(indices, pmt_letters, string=plot_string)
     heatmap_ratio = heatmap(exportmap_num / exportmap_denom, x_ax = x_ax)
-    heatmap_ratio.plot_heatmap_summarised_ring(indices, pmt_letters, title, save_map = save_map, string = plot_string, x_ax = x_ax)
+    heatmap_ratio_appended, x_ax_new, pmt_letters_appended = heatmap_ratio.append_mean_row_column(indices)
+    #plot_heatmap_ultra_basic(heatmap_ratio.heatmap, title, x_ax, pmt_letters, save_map = save_map)
+    plot_heatmap_ultra_basic(heatmap_ratio_appended, x_ax_new, pmt_letters_appended, save_map = save_map)
+    
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 
