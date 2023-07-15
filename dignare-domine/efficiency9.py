@@ -252,15 +252,22 @@ class heatmap():
              heatmap_summarised = heatmap[:, :-1, -1]
         return heatmap_summarised, x_ax
 
-    def summarise_per_ring_part(self, indices, pmt_letters, start_index, stop_index, string = True):
-        if string == True:
+    def summarise_per_ring_part(self, indices, pmt_letters, start_index, stop_index, slice_string = True):
+        if slice_string == True:
             string_start = start_index; string_stop = stop_index; floor_start, floor_stop = 0, 18
-            axis = 1
+            axis = 2
+            #x_ax = self.stringlist[string_start:string_stop]
+            x_ax = self.floorlist
         else:
             string_start, string_stop = 0, 20; floor_start, floor_stop = string_start, string_stop
-            axis = 2
+            axis = 1
+            #x_ax = self.floorlist[floor_start:floor_stop]
+            x_ax = self.stringlist
         mean_heatmap = np.nanmean(self.heatmap[:, floor_start:floor_stop, string_start:string_stop], axis = axis)
-        return mean_heatmap
+        print(mean_heatmap.shape)
+        return mean_heatmap, x_ax
+
+
 
     def export_summarised_heatmap(self, indices, pmt_letters, string = True):
         heatmap_summarised, __ =  self.summarise_per_ring(indices, pmt_letters, string)
@@ -447,15 +454,18 @@ def calc_heatmap_ratio(heatmap_real, heatmap_sim):
     return heatmap_real/heatmap_sim
     #return heatmap_real/heatmap_sim
 
-def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_letters, string = True, save = "Yes", save_map=None,
+def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_letters, plot_string = True, slice_string = True, save = "Yes", save_map=None,
     start_index = None, stop_index = None):
     """Plots heatmap of a ratio of the numerator map over the denominator map. 
     Try new/better over old/worse maps."""
-    exportmap_num, x_ax = heatmap_num.summarise_per_ring(indices, pmt_letters, string = string)
-    exportmap_denom = heatmap_denom.export_summarised_heatmap(indices, pmt_letters, string = string)
+    if start_index != None and stop_index != None: 
+        exportmap_num, x_ax = heatmap_num.summarise_per_ring_part(indices, pmt_letters, start_index, stop_index, slice_string = slice_string)
+        exportmap_denom, __ = heatmap_denom.summarise_per_ring_part(indices, pmt_letters, start_index, stop_index, slice_string = slice_string)
+    else:
+        exportmap_num, x_ax = heatmap_num.summarise_per_ring(indices, pmt_letters, string=plot_string)
+        exportmap_denom, __ = heatmap_denom.summarise_per_ring(indices, pmt_letters, string=plot_string)
     heatmap_ratio = heatmap(exportmap_num / exportmap_denom, x_ax = x_ax)
-    print(x_ax)
-    heatmap_ratio.plot_heatmap_summarised_ring(indices, pmt_letters, title, save_map = save_map, string = string, x_ax = x_ax)
+    heatmap_ratio.plot_heatmap_summarised_ring(indices, pmt_letters, title, save_map = save_map, string = plot_string, x_ax = x_ax)
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 
