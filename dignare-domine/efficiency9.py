@@ -507,7 +507,6 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
     start_index = None, stop_index = None):
     """Plots heatmap of a ratio of the numerator map over the denominator map. 
     Try new/better over old/worse maps."""
-    #TODO append hereto the mean of each row/string/whaterever
     if start_index != None and stop_index != None: 
         exportmap_num, x_ax = heatmap_num.summarise_per_ring_part(indices, pmt_letters, start_index, stop_index, slice_string = slice_string)
         exportmap_denom, __ = heatmap_denom.summarise_per_ring_part(indices, pmt_letters, start_index, stop_index, slice_string = slice_string)
