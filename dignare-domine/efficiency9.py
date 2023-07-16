@@ -223,20 +223,27 @@ class heatmap():
             stringlist.append("mean")
             floorlist.append("mean")
         else:
-            if append_list_1 != list:
+            if not isinstance(append_list_1, list):
                 append_list_1 = append_list_1.tolist()
-            if append_list_2 != list:
+            if not isinstance(append_list_2, list):
                 append_list_2 = append_list_2.tolist()
             append_list_1.append("mean")
             append_list_2.append("mean")
-                
-        string_mean = np.nanmean(self.heatmap, axis = 1); floor_mean = np.nanmean(self.heatmap, axis = 2)
+        if self.heatmap.ndim == 2:
+            string_mean = np.nanmean(self.heatmap, axis = 0); floor_mean = np.nanmean(self.heatmap, axis = 1)
+            new_heatmap = np.zeros([self.heatmap.shape[0]+1, self.heatmap.shape[1]+1])
+            new_heatmap[:-1, :-1] = self.heatmap
+            new_heatmap[-1, :-1] = string_mean; 
+            new_heatmap[:-1, -1] = floor_mean
+            new_heatmap[-1, -1] = np.nan #this corner does not mean anything and should have no data
+        else:
+            string_mean = np.nanmean(self.heatmap, axis = 1); floor_mean = np.nanmean(self.heatmap, axis = 2)
         #print(string_mean)
-        new_heatmap = np.zeros([self.heatmap.shape[0], self.heatmap.shape[1]+1, self.heatmap.shape[2]+1])
-        new_heatmap[:, :-1, :-1] = self.heatmap
-        new_heatmap[:, -1, :-1] = string_mean; 
-        new_heatmap[:, :-1, -1] = floor_mean
-        new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
+            new_heatmap = np.zeros([self.heatmap.shape[0], self.heatmap.shape[1]+1, self.heatmap.shape[2]+1])
+            new_heatmap[:, :-1, :-1] = self.heatmap
+            new_heatmap[:, -1, :-1] = string_mean; 
+            new_heatmap[:, :-1, -1] = floor_mean
+            new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
         if append_list_1 == None and append_list_2 == None:
             return new_heatmap, floorlist, stringlist
         else:
@@ -508,9 +515,9 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
         exportmap_num, x_ax = heatmap_num.summarise_per_ring(indices, pmt_letters, string=plot_string)
         exportmap_denom, __ = heatmap_denom.summarise_per_ring(indices, pmt_letters, string=plot_string)
     heatmap_ratio = heatmap(exportmap_num / exportmap_denom, x_ax = x_ax)
-    heatmap_ratio_appended, x_ax_new, pmt_letters_appended = heatmap_ratio.append_mean_row_column(indices)
+    heatmap_ratio_appended, x_ax_new, pmt_letters_appended = heatmap_ratio.append_mean_row_column(indices, append_list_1=x_ax, append_list_2= pmt_letters)
     #plot_heatmap_ultra_basic(heatmap_ratio.heatmap, title, x_ax, pmt_letters, save_map = save_map)
-    plot_heatmap_ultra_basic(heatmap_ratio_appended, x_ax_new, pmt_letters_appended, save_map = save_map)
+    plot_heatmap_ultra_basic(heatmap_ratio_appended, title, x_ax_new, pmt_letters_appended, save_map = save_map)
     
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
