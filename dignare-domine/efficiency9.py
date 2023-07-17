@@ -72,7 +72,6 @@ class map_hit_data():
 
     def append_pmt_serials(self):
         """Couples PMT-serials to respective PMTs."""
-        a = 0
         new_muon_hit_data = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         new_muon_hit_data[:,:,:4] = self.muon_hit_data
         for i in range(0, len(self.muon_hit_data)):
@@ -82,7 +81,6 @@ class map_hit_data():
                         new_muon_hit_data[i, k, 4] = self.pmt_serial_map[j + k+1]
                         if self.pmt_serial_map[j + k + 1] > magic_number:
                             new_muon_hit_data[i, k, 5] = 1
-                            a = a + 1
                         else:
                             new_muon_hit_data[i, k, 5] = 0
                     break
