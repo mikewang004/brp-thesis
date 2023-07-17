@@ -13,7 +13,7 @@ from efficiency8 import *
 data_real_old = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, new_versions = 0)
 data_real_new = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, new_versions = 1)
 data_sim = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number)
-data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)c
+data_real = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number)
 
 data_sim_old = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, new_versions = 0)
 data_sim_new = map_hit_data(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, new_versions=1)
