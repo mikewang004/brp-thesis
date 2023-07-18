@@ -56,6 +56,8 @@ def get_du_floor_data(domfloordata, pmt_per_dom):
     return domfloorhitrate
 def gauss(x, a, x0, sigma):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))
+def lin_func(x, a, b):
+    return a * x + b
 class gaussfit():
     """Routine to get gaussian data fitted and plotted. Only requires
     the x and y data assuming it is gaussian."""
@@ -186,29 +188,50 @@ class extract_mean_hit_rate():
                 j = j + 31
         self.mean_hit_rate = mean_hit_rate
         mean_hit_rate, __ = self.get_mean_runs(mean_hit_rate)
-        np.save("mean_hit_rate.npy", mean_hit_rate)
+        #np.save("mean_hit_rate.npy", mean_hit_rate)
         return mean_hit_rate
 
 class meanhitrate():
-#TODO implement outliers filter, check for inconsistensies string 12 and 27
+#TODO implement outliers filter, check for inconsistensies string 12 and 27. Also implement correct check on new/old pmt. 
     """Everything that has to do with the efficiency/rate arrays"""
     def __init__(self, mean_hit_rate):
         """Remember mean hit rate array has following structure:
             [data, dom-id / pmt-no / eff / dom / string / pmt-serial / new pmt [yes/no] / rate [khz] ]"""
         self.meanhitrate = mean_hit_rate
-        self.avg_top_bottom_pmts()
+        self.block_per_pmt()
+        #self.filter_data()
+
+    def block_per_pmt(self):
+        self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 8) #block per PMT
+        return 0; 
+
+
         
     def avg_top_bottom_pmts(self, mid_pmt = 12):
         """Averages over the top (0-11) and bottom (12-31) pmts."""
         test = self.meanhitrate.shape
         #self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=0)]
-        self.meanhitrate = self.meanhitrate.reshape(int(test[0]/31), 31, 8) #block per DOM 
+
         self.top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
         self.bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
         #self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
         #self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
         #self.top_length = self.top_avg.shape[0]
         #self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
+        return 0;
+
+    def filter_data(self):
+        """Removes all outliers greater than say 3 sigma from the average. Default usage is on efficiency and rate"""
+        j = 0
+        for i in range(0, self.meanhitrate.shape[0]-1):
+            if self.meanhitrate[i, 0, 3] != self.meanhitrate[i+1,0,  3]: #checks for start new string
+                avg_eff, std_eff = np.nanmean(self.meanhitrate[j:i, :, 2], axis = 0), np.nanstd(self.meanhitrate[j:i:, :, 2], axis = 0)
+                avg_rate, std_rate = np.nanmean(self.meanhitrate[j:i, :, 7], axis = 0), np.nanstd(self.meanhitrate[j:i, :, 7], axis = 0)
+                index_eff = np.where(np.abs(avg_eff - self.meanhitrate[j:i, :, 2]) < 3 * std_eff, self.meanhitrate[j:i, :, 2], np.nan)
+                index_rate = np.where(np.abs(avg_eff - self.meanhitrate[j:i, :, 7]) < 3 * std_rate, self.meanhitrate[j:i, :, 7], np.nan)
+                #print(np.count_nonzero(np.isnan(index_eff)))
+                self.meanhitrate[j:i, :, 2] = index_eff; self.meanhitrate[j:i, :, 7] = index_rate
+                j = i
         return 0;
 
     def plot_all_strings(self):
@@ -235,27 +258,33 @@ class meanhitrate():
 
     def plot_all_strings_no_mean(self):
         "Plots rate vs efficieny for all strings"
-        j = 0
-        for i in range(0, self.meanhitrate.shape[0]-1):
+        j = 0; 
+        for i in range(0, self.meanhitrate.shape[0]-1): #checks for start new string
             if self.meanhitrate[i, 0, 3] != self.meanhitrate[i+1,0,  3]: #checks for start new string
-                if int(self.top_avg[i, 6]) == 1:
-                    color = "blue"
-                else:
-                    color = "orange"
                 plt.figure()
-                plt.title("Rate vs efficiency for du no %i" %(self.meanhitrate[i,0, 3]))
+                for k in range(0, 31):
+                    for l in range(j, i):
+                        if self.meanhitrate[l, k, 6] != self.meanhitrate[l, k + 1, 6]
+                        color = "blue"
+                        marker = "s"
+                        markersize = 10
+                    else:
+                        color = "orange"
+                        marker = "o"
+                        markersize = 10
+                    plt.scatter(self.meanhitrate[j:i+1, k, 2], self.meanhitrate[j:i+1, k, 7], c=color, marker=marker, s=markersize) 
+                plt.title("Rate vs efficiency for du no %i" %(self.meanhitrate[i+1,0, 3]))
                 plt.ylim(0, 12.5)
                 plt.xlim(0, 1.4)
                 plt.xlabel("Efficiency")
                 plt.ylabel("Rate [kHz]")
-                plt.scatter(self.meanhitrate[j:i, :, 2], self.meanhitrate[j:i, :, 7], label = "all pmts", c=color, marker="o") 
-                plt.legend()
-                plt.savefig("plots/all-data/rate_eff_string_%i.pdf" %(self.meanhitrate[i, 0, 3]))
+                plt.savefig("plots/all-data/rate_eff_string_%i.pdf" %(self.meanhitrate[i+1, 0, 3]))
                 j = i 
-        return 0;
+                #print("nans for string no. %i is %f" %(self.meanhitrate[i, 0, 3], np.count_nonzero(np.isnan(self.meanhitrate[j:i, :, :]))))
+        return 0;   
 
-#run_numbers = np.arange(14413,14440, 1)
-run_numbers = np.arange(14413, 14415, 1)
+run_numbers = np.arange(14413,14440, 1)
+#run_numbers = np.arange(14413, 14415, 1)
 #test = extract_mean_hit_rate(run_numbers)
 #test2 = meanhitrate(test.read_root_data())
 
