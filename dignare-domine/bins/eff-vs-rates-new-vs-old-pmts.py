@@ -56,8 +56,9 @@ def get_du_floor_data(domfloordata, pmt_per_dom):
     return domfloorhitrate
 def gauss(x, a, x0, sigma):
     return a*np.exp(-(x-x0)**2/(2*sigma**2))
-def lin_func(x, a, b):
-    return a * x + b
+def lin_func(x, a):
+    return a * x 
+
 class gaussfit():
     """Routine to get gaussian data fitted and plotted. Only requires
     the x and y data assuming it is gaussian."""
@@ -256,30 +257,70 @@ class meanhitrate():
                 j = i 
         return 0;
 
+
+    def apply_pmt_mask(self, meanhitrate, new_versions=1):
+        """Filters for either new pmt version or the old one. Data located in column no 7.
+        If new_versions = 1, then only new versions are returned, otherwise only old versions returned."""
+        newmeanhitrate = meanhitrate.copy()
+        mask = newmeanhitrate[:, :, 6].astype(int)
+        if new_versions == 1:
+            mask = 1 - mask
+        masked_floor_str_hit = np.ma.masked_array(newmeanhitrate[:, :, 2], mask)
+        masked_floor_str_hit_2 = np.ma.masked_array(newmeanhitrate[:, :, 7], mask)
+        newmeanhitrate[:, :, 2] = masked_floor_str_hit.filled(fill_value= np.nan)
+        newmeanhitrate[:, :, 7] = masked_floor_str_hit_2.filled(fill_value = np.nan)
+        if newmeanhitrate[~np.isnan(newmeanhitrate[:, :, 2])].size == 0 or newmeanhitrate[~np.isnan(newmeanhitrate[:, :, 7])].size == 0:
+            return None
+        return newmeanhitrate
+
+    def fit_lin_func_eff_rate(self, meanhitrate):
+        rates, eff = meanhitrate[:, :, 7], meanhitrate[:, :, 2]
+        rates, eff = rates[~np.isnan(rates)], eff[~np.isnan(eff)]
+        popt, pcov = sp.curve_fit(lin_func, eff, rates)
+        return popt
+
     def plot_all_strings_no_mean(self):
         "Plots rate vs efficieny for all strings"
-        j = 0; 
-        for i in range(0, self.meanhitrate.shape[0]-1): #checks for start new string
-            if self.meanhitrate[i, 0, 3] != self.meanhitrate[i+1,0,  3]: #checks for start new string
+        j = 0; x_eff = np.linspace(0, 1.4, 100)
+        err = 0.05 # just assume this 
+        for i in range(1, self.meanhitrate.shape[0]+1): #checks for start new string
+        #for i in range(1, 100):
+            if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == self.meanhitrate.shape[0]-1: #checks for start new string
+                #print(self.meanhitrate[j:i, 0, 3:5])
                 plt.figure()
-                for k in range(0, 31):
-                    for l in range(j, i):
-                        if self.meanhitrate[l, k, 6] != self.meanhitrate[l, k + 1, 6]
-                        color = "blue"
-                        marker = "s"
-                        markersize = 10
-                    else:
-                        color = "orange"
-                        marker = "o"
-                        markersize = 10
-                    plt.scatter(self.meanhitrate[j:i+1, k, 2], self.meanhitrate[j:i+1, k, 7], c=color, marker=marker, s=markersize) 
-                plt.title("Rate vs efficiency for du no %i" %(self.meanhitrate[i+1,0, 3]))
-                plt.ylim(0, 12.5)
-                plt.xlim(0, 1.4)
+                meanhitrate_old = self.apply_pmt_mask(self.meanhitrate[j:i, :, :], new_versions = 0)
+                meanhitrate_new = self.apply_pmt_mask(self.meanhitrate[j:i, :, :])
+                if type(meanhitrate_old) != type(None):
+                    xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
+                    for j in range (0, 31):
+                        plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
+                        xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
+                    plt.plot(x_eff, lin_func(x_eff, *self.fit_lin_func_eff_rate(meanhitrate_old)), color = "blue", label = "old PMT fit")
+                    #plt.errorbar(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]), 
+                    #xerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 2])),
+                    #yerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 7])), color="green", fmt="s", 
+                    #label = "mean old PMTs (%f, %f) +- (%f, %f)" %(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]),
+                    #np.nanstd(meanhitrate_old[:, :, 2]), np.nanstd(meanhitrate_old[:, :, 7])))
+                if type(meanhitrate_new) != type(None):
+                    xerr, yerr = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
+                    for j in range(0, 31):
+                        plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
+                        xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
+                    plt.plot(x_eff, lin_func(x_eff, *self.fit_lin_func_eff_rate(meanhitrate_new)), color = "orange", label = "new PMT fit")
+                    #plt.errorbar(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]), 
+                    #xerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 2])),
+                    #yerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 7])), color="red", fmt="s", 
+                    #label = "mean new PMTs(%f, %f) +- (%f, %f)" %(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]),
+                    #np.nanstd(meanhitrate_new[:, :, 2]), np.nanstd(meanhitrate_new[:, :, 7])))
+                plt.title("Rate vs efficiency for du no %i" %(self.meanhitrate[i-1,0, 3]))
+                plt.ylim(0, 10)
+                plt.xlim(0, 1.3)
                 plt.xlabel("Efficiency")
                 plt.ylabel("Rate [kHz]")
-                plt.savefig("plots/all-data/rate_eff_string_%i.pdf" %(self.meanhitrate[i+1, 0, 3]))
+                plt.legend()
+                plt.savefig("plots/all-data/rate_eff_string_%i.pdf" %(self.meanhitrate[i-1, 0, 3]))
                 j = i 
+                plt.close()
                 #print("nans for string no. %i is %f" %(self.meanhitrate[i, 0, 3], np.count_nonzero(np.isnan(self.meanhitrate[j:i, :, :]))))
         return 0;   
 

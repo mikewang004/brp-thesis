@@ -24,7 +24,8 @@ muon_hit_data_sim = np.load("data/muon_hit_data-sim-reduced_bins-xx1375x.npy")
 #muon_hit_data_real = np.load("muon_hit_data-real-reduced_bins-13754.npy")
 muon_hit_data_real = np.load("data/muon_hit_data-real-reduced_bins-xx1375x.npy")
 modid_map = np.loadtxt("../pmt-info/map.txt")
-eff_list = np.loadtxt("data/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
+#eff_list = np.loadtxt("data/data-133-144-eff.txt", skiprows = 148, usecols=[1,2,3])
+eff_list = np.loadtxt("data/runs-14413-14440-eff.txt")
 pmt_serial_map = np.loadtxt("../pmt-info/pmt-serials.txt", usecols = 0)
 pmt_ring_map = np.loadtxt("../pmt-info/pmt-ring.txt", skiprows = 2, usecols = [0,1,2])
 magic_number = 16104 # The major version change happened at serial number 16104 (all PMTs <=16104 are of a certain kind (R12199), all abover are another one (R14374)).
@@ -213,7 +214,7 @@ class heatmap():
             self.x_ax = x_ax
         
 
-    def append_mean_row_column(self, indices, append_list_1 = None, append_list_2 = None):
+    def append_mean_row_column(self, indices, append_list_1 = None, append_list_2 = None, heatmap = None, include_mean_of_mean = False):
         """Appends the mean to all rows and columns in the heatmap. Also appends floorlist and stringlist 
         to reflect this."""
         if append_list_1 == None and append_list_2 == None:
@@ -227,21 +228,33 @@ class heatmap():
                 append_list_2 = append_list_2.tolist()
             append_list_1.append("mean")
             append_list_2.append("mean")
-        if self.heatmap.ndim == 2:
-            string_mean = np.nanmean(self.heatmap, axis = 0); floor_mean = np.nanmean(self.heatmap, axis = 1)
-            new_heatmap = np.zeros([self.heatmap.shape[0]+1, self.heatmap.shape[1]+1])
-            new_heatmap[:-1, :-1] = self.heatmap
+        if type(heatmap) == type(None):
+            heatmap = self.heatmap
+        else:
+            heatmap = heatmap
+        heatmap_zero_to_nan = heatmap.copy()
+        heatmap_zero_to_nan[heatmap_zero_to_nan == 0] = np.nan
+        if heatmap.ndim == 2:
+            string_mean = np.nanmean(heatmap_zero_to_nan, axis = 0); floor_mean = np.nanmean(heatmap_zero_to_nan, axis = 1)
+            new_heatmap = np.zeros([heatmap.shape[0]+1, heatmap.shape[1]+1])
+            new_heatmap[:-1, :-1] = heatmap
             new_heatmap[-1, :-1] = string_mean; 
             new_heatmap[:-1, -1] = floor_mean
-            new_heatmap[-1, -1] = np.nan #this corner does not mean anything and should have no data
+            if include_mean_of_mean == True:
+                new_heatmap[-1, -1] = np.nanmean(heatmap)
+            else:
+                new_heatmap[-1, -1] = np.nan #this corner does not mean anything and should have no data
         else:
-            string_mean = np.nanmean(self.heatmap, axis = 1); floor_mean = np.nanmean(self.heatmap, axis = 2)
+            string_mean = np.nanmean(heatmap_zero_to_nan, axis = 1); floor_mean = np.nanmean(heatmap_zero_to_nan, axis = 2)
         #print(string_mean)
-            new_heatmap = np.zeros([self.heatmap.shape[0], self.heatmap.shape[1]+1, self.heatmap.shape[2]+1])
-            new_heatmap[:, :-1, :-1] = self.heatmap
+            new_heatmap = np.zeros([heatmap.shape[0], heatmap.shape[1]+1, heatmap.shape[2]+1])
+            new_heatmap[:, :-1, :-1] = heatmap
             new_heatmap[:, -1, :-1] = string_mean; 
             new_heatmap[:, :-1, -1] = floor_mean
-            new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
+            if include_mean_of_mean == True:
+                new_heatmap[-1, -1] = np.nanmean(heatmap)
+            else:
+                new_heatmap[-1, -1] = np.nan #this corner does not mean anything and should have no data
         if append_list_1 == None and append_list_2 == None:
             return new_heatmap, floorlist, stringlist
         else:
@@ -357,7 +370,8 @@ class heatmap():
 
 
 
-    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", save_map=None, string = True, edit_heatmap = False, x_ax = None, include_mean = False):
+    def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", 
+        save_map=None, string = True, x_ax = None, include_mean = False, include_mean_of_mean = False):
         """Summarises the mean per string or per floor into a single heatmap. If string = false then floor plot.
         If x_ax != None then already assumsed self.summarise_per_ring executed"""
         colorscale = colors.sequential.Sunset
@@ -368,6 +382,11 @@ class heatmap():
             heatmap_summarised, x_ax = self.summarise_per_ring(indices, pmt_letters, string)
         else:
             heatmap_summarised = self.heatmap; x_ax = self.x_ax
+
+        if include_mean == True:
+            heatmap_summarised, x_ax, pmt_letters = self.append_mean_row_column(indices, heatmap = heatmap_summarised,
+            append_list_1 = x_ax, append_list_2 = pmt_letters, include_mean_of_mean = include_mean_of_mean)
+        print(x_ax, pmt_letters)
         annotation_text = np.round(heatmap_summarised, 4)
         layout = go.Layout(
             title = title,
