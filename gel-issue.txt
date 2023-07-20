@@ -1,0 +1,4 @@
+string 12
+10 - at least 9 doms possibly 7-15
+
+for sediment check data /MC as bottom part should not be affected by this issue 

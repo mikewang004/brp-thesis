@@ -291,27 +291,31 @@ class meanhitrate():
                 meanhitrate_old = self.apply_pmt_mask(self.meanhitrate[j:i, :, :], new_versions = 0)
                 meanhitrate_new = self.apply_pmt_mask(self.meanhitrate[j:i, :, :])
                 if type(meanhitrate_old) != type(None):
+                    popt = self.fit_lin_func_eff_rate(meanhitrate_old)
                     xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
                     for j in range (0, 31):
                         plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
                         xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
-                    plt.plot(x_eff, lin_func(x_eff, *self.fit_lin_func_eff_rate(meanhitrate_old)), color = "blue", label = "old PMT fit")
+                    plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "old PMT fit, slope %f [eff]/[kHz]" %popt)
                     #plt.errorbar(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]), 
                     #xerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 2])),
                     #yerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 7])), color="green", fmt="s", 
                     #label = "mean old PMTs (%f, %f) +- (%f, %f)" %(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]),
                     #np.nanstd(meanhitrate_old[:, :, 2]), np.nanstd(meanhitrate_old[:, :, 7])))
+                    #plt.text(0.2, 9, "old PMT fit slope is %f [eff]/[kHz]" %popt)
                 if type(meanhitrate_new) != type(None):
+                    popt = self.fit_lin_func_eff_rate(meanhitrate_new)
                     xerr, yerr = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
                     for j in range(0, 31):
                         plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
                         xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
-                    plt.plot(x_eff, lin_func(x_eff, *self.fit_lin_func_eff_rate(meanhitrate_new)), color = "orange", label = "new PMT fit")
+                    plt.plot(x_eff, lin_func(x_eff, *popt), color = "orange", label = "new PMT fit, slope is %f [eff]/[kHz]" %popt)
                     #plt.errorbar(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]), 
                     #xerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 2])),
                     #yerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 7])), color="red", fmt="s", 
                     #label = "mean new PMTs(%f, %f) +- (%f, %f)" %(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]),
                     #np.nanstd(meanhitrate_new[:, :, 2]), np.nanstd(meanhitrate_new[:, :, 7])))
+                    #plt.text(0.2, 8, "new PMT fit slope is %f [eff]/[kHz]" %popt)
                 plt.title("Rate vs efficiency for du no %i" %(self.meanhitrate[i-1,0, 3]))
                 plt.ylim(0, 10)
                 plt.xlim(0, 1.3)

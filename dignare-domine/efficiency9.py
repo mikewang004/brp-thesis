@@ -104,6 +104,17 @@ class map_hit_data():
         """Transforms the number of each PMT to a ring location."""
         for i in range(0, 31):
             self.floor_str_hit[:, i, 3] = pmt_ring_map[i, 1]
+        # Then sort the thing so that ring A is appearing first, then B, etc. 
+        floor_str_hit = np.zeros(self.floor_str_hit.shape)
+        floor_str_hit[:, 0, :] = self.floor_str_hit[:, 22, :]
+        j = 2; i = 1
+        for l in range(0, 6):
+            for k in range(0, 31):
+                if self.floor_str_hit[0, k, 3] == j:
+                    floor_str_hit[:, i, :] = self.floor_str_hit[:, k, :]
+                    i = i + 1
+            j = j + 1
+        self.floor_str_hit = floor_str_hit
         return 0;
 
     def apply_pmt_mask(self, new_versions=1):
@@ -223,11 +234,15 @@ class heatmap():
             floorlist.append("mean")
         else:
             if not isinstance(append_list_1, list):
-                append_list_1 = append_list_1.tolist()
+                append_list_a = append_list_1.tolist()
+            else:
+                append_list_a = append_list_1.copy()
             if not isinstance(append_list_2, list):
-                append_list_2 = append_list_2.tolist()
-            append_list_1.append("mean")
-            append_list_2.append("mean")
+                append_list_b = append_list_2.tolist()
+            else:
+                append_list_b = append_list_2.copy()
+            append_list_a.append("mean")
+            append_list_b.append("mean")
         if type(heatmap) == type(None):
             heatmap = self.heatmap
         else:
@@ -252,13 +267,14 @@ class heatmap():
             new_heatmap[:, -1, :-1] = string_mean; 
             new_heatmap[:, :-1, -1] = floor_mean
             if include_mean_of_mean == True:
-                new_heatmap[-1, -1] = np.nanmean(heatmap)
+                for i in range(0, new_heatmap.shape[0]):
+                    new_heatmap[i, -1, -1] = np.nanmean(new_heatmap[i, :-1, :-1])
             else:
-                new_heatmap[-1, -1] = np.nan #this corner does not mean anything and should have no data
+                new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
         if append_list_1 == None and append_list_2 == None:
             return new_heatmap, floorlist, stringlist
         else:
-            return new_heatmap, append_list_1, append_list_2
+            return new_heatmap, append_list_a, append_list_b
 
     def delete_mean_row_column(self, indices):
         """Deletes the mean of all rows and columns in the heatmap. Reverses above function essentially."""
@@ -317,9 +333,12 @@ class heatmap():
         else:
             zmin_present, zmax_present = True, True
         if include_mean == True:
-            heatmap, floorlist, stringlist = self.append_mean_row_column(indices)
+            heatmap, floorlist, stringlist = self.append_mean_row_column(indices, include_mean_of_mean = True)
         else:
             heatmap, floorlist, stringlist = self.heatmap, self.floorlist, self.stringlist
+        zmax2 = np.nanmean(heatmap) + 3* np.nanstd(heatmap)
+        zmin2 = np.nanmean(heatmap) - 3 * np.nanstd(heatmap)
+        print(zmax2, zmin2)
         for i in range(0, len(indices)-1):
             if pmt_letters is None:
                 title_complete = title
@@ -352,7 +371,7 @@ class heatmap():
                 zmin_array[i] = zmin
             else:
                 zmin = zmin_array[i]
-            fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin, zmax=zmax), layout = layout)
+            fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin2, zmax=zmax2, zauto=False), layout = layout)
             #print("Average of hits is %f +- %f" %(np.nanmean(self.heatmap[i, :, :]), np.nanstd(self.heatmap[i, :, :])))
             #fig.show()
             if save == "Yes":
@@ -379,10 +398,9 @@ class heatmap():
         print(colorscale[0])
         colorscale[0] = '#665679'
         if x_ax == None:
-            heatmap_summarised, x_ax = self.summarise_per_ring(indices, pmt_letters, string)
+            heatmap_summarised, x_ax = self.summarise_per_ring(indices, pmt_letters, string=string)
         else:
             heatmap_summarised = self.heatmap; x_ax = self.x_ax
-
         if include_mean == True:
             heatmap_summarised, x_ax, pmt_letters = self.append_mean_row_column(indices, heatmap = heatmap_summarised,
             append_list_1 = x_ax, append_list_2 = pmt_letters, include_mean_of_mean = include_mean_of_mean)
