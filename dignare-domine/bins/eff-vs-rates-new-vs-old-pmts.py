@@ -109,7 +109,7 @@ class extract_mean_hit_rate():
     def get_map_data(self, effs):
         """Substitutes module-id for corresponding efficiency and generates a mapping
         of efficiencies to du and floor number"""
-        mapdata = np.zeros([len(effs[:, 0]), 5])
+        mapdata = np.zeros([len(effs[:, 0]), 5]) * np.nan
         for i in range(0, len(effs)):
             if i % self.pmt_per_dom == 0:
                 for l_no, line in enumerate(self.du_eff_map): #first search for number then use that for next 31 entries.
@@ -168,7 +168,7 @@ class extract_mean_hit_rate():
 
     def read_root_data(self):
         self.analysis_mul_runs()
-        mean_hit_rate = np.zeros([self.mapdata_large.shape[0], self.mapdata_large.shape[1], 8]) # eff / pmt / du / floor / mean or something
+        mean_hit_rate = np.zeros([self.mapdata_large.shape[0], self.mapdata_large.shape[1], 8]) * np.nan # eff / pmt / du / floor / mean or something
         #mean_hit_rate.astype(np.float32)
         mean_hit_rate[:, :, 0:7] = np.copy(self.mapdata_large)
         bin_popt, bin_pcov = fit_bin_size("../data/y-bin_size.txt") #assume bin sizes constant over all runs
@@ -281,8 +281,9 @@ class meanhitrate():
 
     def plot_all_strings_no_mean(self):
         "Plots rate vs efficieny for all strings"
-        j = 0; x_eff = np.linspace(0, 1.4, 100)
+        j = 0; x_eff = np.linspace(0, 1.4, 100); l = 0
         err = 0.05 # just assume this 
+        popt_arr = np.zeros([2, int(self.meanhitrate.shape[0]/18)]) * np.nan
         for i in range(1, self.meanhitrate.shape[0]+1): #checks for start new string
         #for i in range(1, 100):
             if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == self.meanhitrate.shape[0]-1: #checks for start new string
@@ -292,11 +293,14 @@ class meanhitrate():
                 meanhitrate_new = self.apply_pmt_mask(self.meanhitrate[j:i, :, :])
                 if type(meanhitrate_old) != type(None):
                     popt = self.fit_lin_func_eff_rate(meanhitrate_old)
+                    if l == 2:
+                        popt_special = self.fit_lin_func_eff_rate(self.apply_pmt_mask(self.meanhitrate[j+7:i-4, :, :], new_versions = 0))
                     xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
                     for j in range (0, 31):
                         plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
                         xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
                     plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "old PMT fit, slope %f [eff]/[kHz]" %popt)
+                    popt_arr[0, l] = popt
                     #plt.errorbar(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]), 
                     #xerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 2])),
                     #yerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 7])), color="green", fmt="s", 
@@ -310,6 +314,7 @@ class meanhitrate():
                         plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
                         xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
                     plt.plot(x_eff, lin_func(x_eff, *popt), color = "orange", label = "new PMT fit, slope is %f [eff]/[kHz]" %popt)
+                    popt_arr[1, l] = popt
                     #plt.errorbar(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]), 
                     #xerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 2])),
                     #yerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 7])), color="red", fmt="s", 
@@ -325,8 +330,10 @@ class meanhitrate():
                 plt.savefig("plots/all-data/rate_eff_string_%i.pdf" %(self.meanhitrate[i-1, 0, 3]))
                 j = i 
                 plt.close()
+                l = l + 1
                 #print("nans for string no. %i is %f" %(self.meanhitrate[i, 0, 3], np.count_nonzero(np.isnan(self.meanhitrate[j:i, :, :]))))
-        return 0;   
+            if i == 377:
+                return popt_arr, popt_special
 
 run_numbers = np.arange(14413,14440, 1)
 #run_numbers = np.arange(14413, 14415, 1)
@@ -334,7 +341,17 @@ run_numbers = np.arange(14413,14440, 1)
 #test2 = meanhitrate(test.read_root_data())
 
 test2 = meanhitrate(np.load("mean_hit_rate.npy"))
-test2.plot_all_strings_no_mean()
+popt_arr, popt_special = test2.plot_all_strings_no_mean()
+
+popt_arr[0, -2] = np.nan
+
+print(np.nanmean(popt_arr, axis = 1))
+print(np.nanstd(popt_arr, axis=1))
+print(popt_special)
+#print(popt_arr)
+# For DOM-gel issue:
+# String 12 is 3 sigma away from average; affected DOMs in string 10 
+
 
 #Now plot mean hit rate 
 

@@ -337,7 +337,7 @@ class heatmap():
         else:
             heatmap, floorlist, stringlist = self.heatmap, self.floorlist, self.stringlist
         zmax2 = np.nanmean(heatmap) + 3* np.nanstd(heatmap)
-        zmin2 = np.nanmean(heatmap) - 3 * np.nanstd(heatmap)
+        zmin2 = np.nanmean(heatmap) - 2 * np.nanstd(heatmap)
         print(zmax2, zmin2)
         for i in range(0, len(indices)-1):
             if pmt_letters is None:
@@ -385,7 +385,8 @@ class heatmap():
         #print(zmax_array, zmin_array)
         #if include_mean == True: 
         #    self.heatmap, self.floorlist, self.stringlist = self.delete_mean_row_column(indices)
-        return zmax_array, zmin_array
+        #return zmax_array, zmin_array
+        return self.heatmap, self.floorlist, self.stringlist
 
 
 
@@ -504,11 +505,17 @@ class heatmap():
             fig.show()
 
 
-def plot_heatmap_ultra_basic( heatmap, title, x_ax, y_ax, save="Yes", save_map = None):
+def plot_heatmap_ultra_basic( heatmap_arr, title, x_ax, y_ax, save="Yes", save_map = None, include_mean = False):
     colorscale = colors.sequential.Sunset
     colorscale = colorscale[::-1]
     colorscale[0] = '#665679'
-    annotation_text = np.round(heatmap, 4)
+    zmin = np.nanmean(heatmap_arr) - 2 * np.nanstd(heatmap_arr)
+    zmax = np.nanmean(heatmap_arr) + 3 * np.nanstd(heatmap_arr)
+    if include_mean == True:
+        heatmap_cl = heatmap(heatmap_arr)
+        heatmap_arr, x_ax, y_ax = heatmap_cl.append_mean_row_column(
+            indices, append_list_1 = x_ax, append_list_2 = y_ax, heatmap = heatmap_arr, include_mean_of_mean = True)
+    annotation_text = np.round(heatmap_arr, 4)
     layout = go.Layout(
         title = title,
         xaxis = dict(
@@ -524,7 +531,8 @@ def plot_heatmap_ultra_basic( heatmap, title, x_ax, y_ax, save="Yes", save_map =
             dtick = 1
         ),
 )
-    fig = go.Figure(data = go.Heatmap(z=heatmap, text = annotation_text, texttemplate="%{text}", colorscale=colorscale), layout = layout)
+    fig = go.Figure(data = go.Heatmap(z=heatmap_arr, text = annotation_text, texttemplate="%{text}", colorscale=colorscale,
+    zmin = zmin, zmax = zmax), layout = layout)
     #fig.show()
     if save == "Yes":
         if save_map == None:
