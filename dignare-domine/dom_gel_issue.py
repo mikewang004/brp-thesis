@@ -14,20 +14,19 @@ heatmap, floorlist, stringlist = eff_all.plot_heatmap(indices, pmt_letters, titl
 #     save_map = "plots/efficiencies", string=False, include_mean = True, include_mean_of_mean = True)
 
 
-heatmap_all_pmts = np.mean(heatmap, axis = 0)
+heatmap_all_pmts = np.mean(heatmap[:4, :, :], axis = 0)
 
 #plot_heatmap_ultra_basic(heatmap_all_pmts, "Efficiencies per DOM", stringlist, floorlist, save_map = "plots/efficiencies", include_mean=True)
 
 
 print(np.mean(heatmap_all_pmts[6:15, 2]))
-print(np.nanmean(heatmap_all_pmts[:, 4]))
-
+print(np.nanmean(heatmap_all_pmts))
 
 gel_mask = ma.masked_greater(heatmap_all_pmts, np.nanmean(heatmap_all_pmts[:, 2]))
 gel_mask = ma.filled(gel_mask, np.nan)
 
 
-#plot_heatmap_ultra_basic(gel_mask, "Efficiencies per suspected gel-issue DOM", stringlist, floorlist, save_map = "plots/gel-issue", include_mean=True)
+plot_heatmap_ultra_basic(gel_mask, "Efficiencies per suspected gel-issue DOM, lower half PMTs only", stringlist, floorlist, save_map = "plots/gel-issue", include_mean=True)
 
 
 # Try alternative approach: plot 1d distributions of the efficiencies. 
@@ -36,8 +35,8 @@ gel_mask = ma.filled(gel_mask, np.nan)
 #for i in range(0, heatmap_all_pmts.shape[1]):
 #for i in range(0, 8):
     #plt.hist(heatmap_all_pmts[:, i], bins = 40, range = (0.7, 1.1), label = "string %i" %stringlist[i], histtype='bar', stacked=True)
-plt.hist(heatmap_all_pmts[:, :], bins = 40, range = (0.7, 1.1), histtype='bar', stacked=True, label = )
-plt.legend()
-plt.show()
+# plt.hist(heatmap_all_pmts[:, :], bins = 40, range = (0.7, 1.1), histtype='bar', stacked=True, label = )
+# plt.legend()
+# plt.show()
 
 #TODO correlate these results to rate vs efficiency plots. 

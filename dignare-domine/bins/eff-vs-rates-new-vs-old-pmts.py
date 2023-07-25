@@ -200,7 +200,7 @@ class meanhitrate():
             [data, dom-id / pmt-no / eff / dom / string / pmt-serial / new pmt [yes/no] / rate [khz] ]"""
         self.meanhitrate = mean_hit_rate
         self.block_per_pmt()
-        #self.filter_data()
+        self.filter_data()
 
     def block_per_pmt(self):
         self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 8) #block per PMT
@@ -224,16 +224,30 @@ class meanhitrate():
     def filter_data(self):
         """Removes all outliers greater than say 3 sigma from the average. Default usage is on efficiency and rate"""
         j = 0
-        for i in range(0, self.meanhitrate.shape[0]-1):
-            if self.meanhitrate[i, 0, 3] != self.meanhitrate[i+1,0,  3]: #checks for start new string
-                avg_eff, std_eff = np.nanmean(self.meanhitrate[j:i, :, 2], axis = 0), np.nanstd(self.meanhitrate[j:i:, :, 2], axis = 0)
-                avg_rate, std_rate = np.nanmean(self.meanhitrate[j:i, :, 7], axis = 0), np.nanstd(self.meanhitrate[j:i, :, 7], axis = 0)
-                index_eff = np.where(np.abs(avg_eff - self.meanhitrate[j:i, :, 2]) < 3 * std_eff, self.meanhitrate[j:i, :, 2], np.nan)
-                index_rate = np.where(np.abs(avg_eff - self.meanhitrate[j:i, :, 7]) < 3 * std_rate, self.meanhitrate[j:i, :, 7], np.nan)
-                #print(np.count_nonzero(np.isnan(index_eff)))
-                self.meanhitrate[j:i, :, 2] = index_eff; self.meanhitrate[j:i, :, 7] = index_rate
+        for i in range(1, self.meanhitrate.shape[0]):
+        #for i in range(1, 25):
+            if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == 377: #checks for start new string
+                avg_eff, std_eff = np.nanmean(self.meanhitrate[j:i, :, 2]), np.nanstd(self.meanhitrate[j:i:, :, 2])
+                avg_rate, std_rate = np.nanmean(self.meanhitrate[j:i, :, 7]), np.nanstd(self.meanhitrate[j:i, :, 7])
+                #Now create new filter which nans 
+                index_eff = np.abs(avg_eff - self.meanhitrate[j:i, :, 2]) < 1 * std_eff
+                index_rate = np.abs(avg_rate - self.meanhitrate[j:i, :, 7]) < 1 * std_rate
+                index_all = index_eff * index_rate
+                # print(index_all.shape)
+                # print(np.nonzero(index_eff == False))
+                # print()
+                # print(np.nonzero(index_rate == False))
+                # print()
+                # print(np.nonzero(index_all == False))
+                #self.meanhitrate[j:i, :, 2] = index_eff; self.meanhitrate[j:i, :, 7] = index_rate
+                self.meanhitrate[j:i, :, 2] = np.where(index_all, self.meanhitrate[j:i, :, 2], np.nan)
+                self.meanhitrate[j:i, :, 7] = np.where(index_all, self.meanhitrate[j:i, :, 7], np.nan)
                 j = i
         return 0;
+
+
+    #def filter_data(self):
+
 
     def plot_all_strings(self):
         "Plots rate vs efficieny for all strings"
@@ -258,7 +272,7 @@ class meanhitrate():
         return 0;
 
 
-    def apply_pmt_mask(self, meanhitrate, new_versions=1):
+    def apply_pmt_mask(self, meanhitrate, new_versions=1, print_version = False):
         """Filters for either new pmt version or the old one. Data located in column no 7.
         If new_versions = 1, then only new versions are returned, otherwise only old versions returned."""
         newmeanhitrate = meanhitrate.copy()
@@ -269,7 +283,14 @@ class meanhitrate():
         masked_floor_str_hit_2 = np.ma.masked_array(newmeanhitrate[:, :, 7], mask)
         newmeanhitrate[:, :, 2] = masked_floor_str_hit.filled(fill_value= np.nan)
         newmeanhitrate[:, :, 7] = masked_floor_str_hit_2.filled(fill_value = np.nan)
+        if print_version == True:
+            pass
+            #print(newmeanhitrate[:, 0, 2])
+            #print(np.count_nonzero(np.isnan(newmeanhitrate[:, :, 2])))
+            #print(newmeanhitrate[:, :, 2].size)
         if newmeanhitrate[~np.isnan(newmeanhitrate[:, :, 2])].size == 0 or newmeanhitrate[~np.isnan(newmeanhitrate[:, :, 7])].size == 0:
+            return None
+        elif np.count_nonzero(np.isnan(newmeanhitrate[:, :, 2])) >= int(0.75*newmeanhitrate[:, :, 2].size):
             return None
         return newmeanhitrate
 
@@ -279,61 +300,101 @@ class meanhitrate():
         popt, pcov = sp.curve_fit(lin_func, eff, rates)
         return popt
 
-    def plot_all_strings_no_mean(self):
-        "Plots rate vs efficieny for all strings"
+    def plot_all_strings_no_mean(self, pmt_start = 0, pmt_stop = 31, pmt_range = "all", plot = True):
+        "Plots rate vs efficieny for all strings. Note pmts are arranged in the second dimension based on rings, so that "
+        "ring E-F denoted by index 18-30; pmt_range = {lower, upper, all}"
         j = 0; x_eff = np.linspace(0, 1.4, 100); l = 0
         err = 0.05 # just assume this 
         popt_arr = np.zeros([2, int(self.meanhitrate.shape[0]/18)]) * np.nan
-        for i in range(1, self.meanhitrate.shape[0]+1): #checks for start new string
+        if pmt_range == "lower":
+            pmt_start, pmt_stop = 0, 18
+            low_high_str = "lower"
+        elif pmt_range == "upper":
+            pmt_start, pmt_stop = 18, 31
+            low_high_str = "upper"
+        for i in range(1, self.meanhitrate.shape[0]): #checks for start new string
         #for i in range(1, 100):
-            if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == self.meanhitrate.shape[0]-1: #checks for start new string
-                #print(self.meanhitrate[j:i, 0, 3:5])
-                plt.figure()
+            if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == 377: #checks for start new string
                 meanhitrate_old = self.apply_pmt_mask(self.meanhitrate[j:i, :, :], new_versions = 0)
                 meanhitrate_new = self.apply_pmt_mask(self.meanhitrate[j:i, :, :])
-                if type(meanhitrate_old) != type(None):
-                    popt = self.fit_lin_func_eff_rate(meanhitrate_old)
-                    if l == 2:
-                        popt_special = self.fit_lin_func_eff_rate(self.apply_pmt_mask(self.meanhitrate[j+7:i-4, :, :], new_versions = 0))
-                    xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
-                    for j in range (0, 31):
-                        plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
-                        xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
-                    plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "old PMT fit, slope %f [eff]/[kHz]" %popt)
-                    popt_arr[0, l] = popt
-                    #plt.errorbar(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]), 
-                    #xerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 2])),
-                    #yerr = np.nanstd(np.nanmean(meanhitrate_old[:, :, 7])), color="green", fmt="s", 
-                    #label = "mean old PMTs (%f, %f) +- (%f, %f)" %(np.nanmean(meanhitrate_old[:, :, 2]), np.nanmean(meanhitrate_old[:, :, 7]),
-                    #np.nanstd(meanhitrate_old[:, :, 2]), np.nanstd(meanhitrate_old[:, :, 7])))
-                    #plt.text(0.2, 9, "old PMT fit slope is %f [eff]/[kHz]" %popt)
-                if type(meanhitrate_new) != type(None):
-                    popt = self.fit_lin_func_eff_rate(meanhitrate_new)
-                    xerr, yerr = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
-                    for j in range(0, 31):
-                        plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
-                        xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
-                    plt.plot(x_eff, lin_func(x_eff, *popt), color = "orange", label = "new PMT fit, slope is %f [eff]/[kHz]" %popt)
-                    popt_arr[1, l] = popt
-                    #plt.errorbar(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]), 
-                    #xerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 2])),
-                    #yerr = np.nanstd(np.nanmean(meanhitrate_new[:, :, 7])), color="red", fmt="s", 
-                    #label = "mean new PMTs(%f, %f) +- (%f, %f)" %(np.nanmean(meanhitrate_new[:, :, 2]), np.nanmean(meanhitrate_new[:, :, 7]),
-                    #np.nanstd(meanhitrate_new[:, :, 2]), np.nanstd(meanhitrate_new[:, :, 7])))
-                    #plt.text(0.2, 8, "new PMT fit slope is %f [eff]/[kHz]" %popt)
-                plt.title("Rate vs efficiency for du no %i" %(self.meanhitrate[i-1,0, 3]))
-                plt.ylim(0, 10)
-                plt.xlim(0, 1.3)
-                plt.xlabel("Efficiency")
-                plt.ylabel("Rate [kHz]")
-                plt.legend()
-                plt.savefig("plots/all-data/rate_eff_string_%i.pdf" %(self.meanhitrate[i-1, 0, 3]))
-                j = i 
-                plt.close()
+                if plot == True:
+                    plt.figure()
+                    if type(meanhitrate_old) != type(None):
+                        popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+                        xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
+                        for j in range (pmt_start, pmt_stop):
+                            plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
+                            xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
+                        plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "old PMT fit, slope %f [kHz]/[eff]" %popt)
+                        popt_arr[0, l] = popt
+                    if type(meanhitrate_new) != type(None):
+                        popt = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+                        xerr, yerr = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
+                        for j in range(pmt_start, pmt_stop):
+                            plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
+                            xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
+                        plt.plot(x_eff, lin_func(x_eff, *popt), color = "orange", label = "new PMT fit, slope is %f [kHz]/[eff]" %popt)
+                        popt_arr[1, l] = popt
+                    plt.ylim(0, 10)
+                    plt.xlim(0, 1.3)
+                    plt.xlabel("Efficiency")
+                    plt.ylabel("Rate [kHz]")
+                    plt.legend()
+                    if pmt_range == "all":
+                        plt.title("Rate vs efficiency for DU %i, all PMTs" %(self.meanhitrate[i-1,0, 3]))
+                        plt.savefig("plots/all-data/all_pmts_rate_eff_string_%i.pdf" %(self.meanhitrate[i-1, 0, 3]))
+                    else:
+                        plt.title("Rate vs efficiency for DU %i, %s PMTs only" %(self.meanhitrate[i-1,0, 3], low_high_str))
+                        plt.savefig("plots/all-data/%s_pmts_rate_eff_string_%i.pdf" %(low_high_str, self.meanhitrate[i-1, 0, 3]))
+                    j = i 
+                    plt.close()
+                else: #plot == False
+                    if type(meanhitrate_old) != type(None):
+                        popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+                        popt_arr[0, l] = popt
+                    if type(meanhitrate_new) != type(None):
+                        popt2 = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+                        popt_arr[1, l] = popt2
                 l = l + 1
-                #print("nans for string no. %i is %f" %(self.meanhitrate[i, 0, 3], np.count_nonzero(np.isnan(self.meanhitrate[j:i, :, :]))))
             if i == 377:
-                return popt_arr, popt_special
+                return popt_arr
+
+    def plot_all_strings_one_plot(self, pmt_start = 0, pmt_stop = 31, pmt_range = "all"):
+        err = 0.05; x_eff = np.linspace(0, 1.4, 100);
+        if pmt_range == "lower":
+            pmt_start, pmt_stop = 0, 18
+            low_high_str = "lower"
+        elif pmt_range == "upper":
+            pmt_start, pmt_stop = 18, 31
+            low_high_str = "upper"
+        plt.figure()
+        meanhitrate_old = self.apply_pmt_mask(self.meanhitrate[:, :, :], new_versions = 0)
+        meanhitrate_new = self.apply_pmt_mask(self.meanhitrate[:, :, :])
+        popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+        xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
+        for j in range (pmt_start, pmt_stop):
+            plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
+            xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
+        plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "old PMT fit, slope %f [kHz]/[eff]" %popt)
+        popt2 = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+        xerr2, yerr2 = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
+        for j in range (pmt_start, pmt_stop):
+            plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
+            xerr = xerr2[:, j], yerr = yerr2[:, j], fmt = ".", color = "orange") # version R12199
+        plt.plot(x_eff, lin_func(x_eff, *popt2), color = "orange", label = "new PMT fit, slope %f [kHz]/[eff]" %popt2)
+        plt.ylim(0, 10)
+        plt.xlim(0, 1.3)
+        plt.xlabel("Efficiency")
+        plt.ylabel("Rate [kHz]")
+        plt.legend()
+        if pmt_range == "all":
+            plt.title("Rate vs efficiency for all DUs, all PMTs")
+            plt.savefig("plots/all-data/all_dus_all_pmts_rate_eff_string.pdf")
+        else:
+            plt.title("Rate vs efficiency for DU, %s PMTs only" %(low_high_str))
+            plt.savefig("plots/all-data/all_dus_%s_pmts_rate_eff_string.pdf" %(low_high_str))
+        plt.close()
+        return 0;
 
 run_numbers = np.arange(14413,14440, 1)
 #run_numbers = np.arange(14413, 14415, 1)
@@ -341,14 +402,20 @@ run_numbers = np.arange(14413,14440, 1)
 #test2 = meanhitrate(test.read_root_data())
 
 test2 = meanhitrate(np.load("mean_hit_rate.npy"))
-popt_arr, popt_special = test2.plot_all_strings_no_mean()
 
-popt_arr[0, -2] = np.nan
+#popt_arr = test2.plot_all_strings_no_mean(pmt_range = "upper")
+#test2.plot_all_strings_one_plot(pmt_range = "upper")
+pmt_range_list = ["all", "upper", "lower"]
+#pmt_range_list = ["all"]
 
-print(np.nanmean(popt_arr, axis = 1))
-print(np.nanstd(popt_arr, axis=1))
-print(popt_special)
-#print(popt_arr)
+def plot_all_eff_range_str_plots(pmt_range_list = pmt_range_list, plot = True):
+    popt_arr = []
+    for s in pmt_range_list:
+        popt_arr.append(test2.plot_all_strings_no_mean(pmt_range = s, plot = plot))
+    return popt_arr
+
+popt_all, popt_upper, popt_lower = plot_all_eff_range_str_plots(plot = True)
+print(popt_all)
 # For DOM-gel issue:
 # String 12 is 3 sigma away from average; affected DOMs in string 10 
 
