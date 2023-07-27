@@ -16,13 +16,14 @@ heatmap, floorlist, stringlist = eff_all.plot_heatmap(indices, pmt_letters, titl
 
 heatmap_all_pmts = np.mean(heatmap[:4, :, :], axis = 0)
 
-#plot_heatmap_ultra_basic(heatmap_all_pmts, "Efficiencies per DOM", stringlist, floorlist, save_map = "plots/efficiencies", include_mean=True)
+plot_heatmap_ultra_basic(heatmap_all_pmts, "Efficiencies per DOM, lower half PMTs only", stringlist, floorlist, save_map = "plots/efficiencies", include_mean=True)
 
 
 print(np.mean(heatmap_all_pmts[6:15, 2]))
 print(np.nanmean(heatmap_all_pmts))
 
-gel_mask = ma.masked_greater(heatmap_all_pmts, np.nanmean(heatmap_all_pmts[:, 2]))
+
+gel_mask = ma.masked_greater(heatmap_all_pmts, (np.nanmean(heatmap_all_pmts[6:15, 2]) + np.nanmean(heatmap_all_pmts[:, 5]))/2)
 gel_mask = ma.filled(gel_mask, np.nan)
 
 
