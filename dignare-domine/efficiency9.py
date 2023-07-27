@@ -42,7 +42,7 @@ class map_hit_data():
 
     """Workflow as follows: data loadin is as 2d array with column as above. Then data gets appended, upon which the array gets transformed to 3d 
     with the pmt number being the 3rd dimension. Then data reorganised into heatmap."""
-    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floor_str_hit = None):
+    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floor_str_hit = None, apply_shadow_mask = False):
         self.modid_map = modid_map
         self.eff_list = eff_list    
         self.pmt_serial_map = pmt_serial_map; self.magic_number = magic_number
@@ -51,6 +51,8 @@ class map_hit_data():
             self.append_eff_data()
             self.append_pmt_serials()
             self.mod_id_to_floor_string()
+            if apply_shadow_mask == True:
+                self.apply_shadow_mask()
             self.pmt_no_to_ring_letter()
             if new_versions != None: 
                 self.apply_pmt_mask(new_versions = new_versions)
@@ -115,6 +117,13 @@ class map_hit_data():
                     i = i + 1
             j = j + 1
         self.floor_str_hit = floor_str_hit
+        return 0;
+
+    def apply_shadow_mask(self):
+        """Filters out the shadowed PMTs namely C2 C5 E2 E5 or channel numbers 1 6 20 21"""
+        for i in [1, 6, 20, 21]:
+            self.floor_str_hit[:, i, 4] = np.nan
+            self.floor_str_hit[:, i, 5] = np.nan
         return 0;
 
     def apply_pmt_mask(self, new_versions=1):
@@ -211,8 +220,8 @@ class map_hit_data():
         return heatmap
     
 
-def speedrun_heatmap(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floorlist = floorlist, stringlist = stringlist, int_rates_or_eff = 4):
-    hit_runs_arr = map_hit_data(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions= new_versions)
+def speedrun_heatmap(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floorlist = floorlist, stringlist = stringlist, int_rates_or_eff = 4, apply_shadow_mask = False):
+    hit_runs_arr = map_hit_data(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions= new_versions, apply_shadow_mask= apply_shadow_mask)
     return heatmap(hit_runs_arr.export_heatmap(indices, int_rates_or_eff = int_rates_or_eff))
 
 class heatmap():
@@ -422,7 +431,9 @@ class heatmap():
                 dtick = 1
             ),
         )
-        zmax = np.nanmax(heatmap_summarised); zmin = np.nanmin(heatmap_summarised)
+        #zmax = np.nanmax(heatmap_summarised); zmin = np.nanmin(heatmap_summarised)
+        zmin = np.nanmean(heatmap_summarised) - 2 * np.nanstd(heatmap_summarised)
+        zmax = np.nanmean(heatmap_summarised) + 2 * np.nanstd(heatmap_summarised)
         fig = go.Figure(data = go.Heatmap(z=heatmap_summarised, text = annotation_text, 
             texttemplate="%{text}", colorscale=colorscale, zmin=zmin, zmax=zmax), layout = layout)
         if save == "Yes":
@@ -432,7 +443,7 @@ class heatmap():
                 write_path = save_map + str('/%s.pdf' %(title.replace(" ", "-")))
                 pio.write_image(fig, write_path)
         #self.heatmap, __, __ = self.delete_mean_row_column(indices)
-        return 0;
+        return heatmap_summarised
     
     def plot_heatmap_matplotlib(self, indices, title):
         for i in range(0, len(indices) - 1):

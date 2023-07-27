@@ -14,20 +14,20 @@ heatmap, floorlist, stringlist = eff_all.plot_heatmap(indices, pmt_letters, titl
 #     save_map = "plots/efficiencies", string=False, include_mean = True, include_mean_of_mean = True)
 
 
-heatmap_all_pmts = np.mean(heatmap[:4, :, :], axis = 0)
+heatmap_all_pmts = np.mean(heatmap[4:, :, :], axis = 0)
 
-plot_heatmap_ultra_basic(heatmap_all_pmts, "Efficiencies per DOM, lower half PMTs only", stringlist, floorlist, save_map = "plots/efficiencies", include_mean=True)
+plot_heatmap_ultra_basic(heatmap_all_pmts, "Efficiencies per DOM, upper half PMTs only", stringlist, floorlist, save_map = "plots/efficiencies", include_mean=True)
 
 
 print(np.mean(heatmap_all_pmts[6:15, 2]))
 print(np.nanmean(heatmap_all_pmts))
-
-
-gel_mask = ma.masked_greater(heatmap_all_pmts, (np.nanmean(heatmap_all_pmts[6:15, 2]) + np.nanmean(heatmap_all_pmts[:, 5]))/2)
+avg_mean_sus_strings = (np.nanmean(heatmap_all_pmts[6:15, 2]) + np.nanmean(heatmap_all_pmts[:, 4]))/2 + np.sqrt(0.25 * np.nanstd(heatmap_all_pmts[6:15, 2])**2 + 0.25 * np.nanstd(heatmap_all_pmts[:, 4])**2)
+#print(avg_mean_sus_strings)
+gel_mask = ma.masked_greater(heatmap_all_pmts, avg_mean_sus_strings)
 gel_mask = ma.filled(gel_mask, np.nan)
 
 
-plot_heatmap_ultra_basic(gel_mask, "Efficiencies per suspected gel-issue DOM, lower half PMTs only", stringlist, floorlist, save_map = "plots/gel-issue", include_mean=True)
+plot_heatmap_ultra_basic(gel_mask, "Efficiencies per suspected gel-issue DOM, upper half PMTs only", stringlist, floorlist, save_map = "plots/gel-issue", include_mean=True)
 
 
 # Try alternative approach: plot 1d distributions of the efficiencies. 
