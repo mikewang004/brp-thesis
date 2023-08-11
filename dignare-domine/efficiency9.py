@@ -34,6 +34,9 @@ indices = [0, 1, 7, 13, 19, 25, 31]
 pmt_letters = ["A", "B", "C", "D", "E", "F"]
 floorlist = np.loadtxt("data/floorlist.txt"); stringlist = np.loadtxt("data/stringlist.txt")
 
+min_std_fac = 2 
+max_std_fac = 3
+
 
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
@@ -294,7 +297,7 @@ class heatmap():
 
     def summarise_per_ring(self, indices, pmt_letters, string = True):
         """Returns mean heatmap of either floor of string along with floor or stringlist."""
-        heatmap, __, __ = self.append_mean_row_column(indices)
+        heatmap, __, __ = self.append_mean_row_column(indices, include_mean_of_mean = True)
         if string == True: 
             x_ax = self.stringlist
         else:
@@ -328,10 +331,13 @@ class heatmap():
         heatmap_summarised, __ =  self.summarise_per_ring(indices, pmt_letters, string)
         return heatmap_summarised
         
-
+    def export_summarised_heatmap_and_labels(self, indices, pmt_letters, string = True):
+        heatmap_summarised, x_ax =  self.summarise_per_ring(indices, pmt_letters, string)
+        return heatmap_summarised, x_ax, pmt_letters
 
     def plot_heatmap(self, indices, pmt_letters, title, save = "Yes", save_map=None, zmax_array = None, zmin_array = None, include_mean = False):
         """Manually set pmt_letters to none if groups are different"""
+        global min_std_fac; global max_std_fac
         colorscale = colors.sequential.Sunset
         colorscale = colorscale[::-1]
         colorscale[0] = '#665679'
@@ -345,8 +351,8 @@ class heatmap():
             heatmap, floorlist, stringlist = self.append_mean_row_column(indices, include_mean_of_mean = True)
         else:
             heatmap, floorlist, stringlist = self.heatmap, self.floorlist, self.stringlist
-        zmax2 = np.nanmean(heatmap) + 3* np.nanstd(heatmap)
-        zmin2 = np.nanmean(heatmap) - 2 * np.nanstd(heatmap)
+        zmax2 = np.nanmean(heatmap) + min_std_fac* np.nanstd(heatmap)
+        zmin2 = np.nanmean(heatmap) - max_std_fac * np.nanstd(heatmap)
         print(zmax2, zmin2)
         for i in range(0, len(indices)-1):
             if pmt_letters is None:
@@ -572,6 +578,22 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
     #plot_heatmap_ultra_basic(heatmap_ratio.heatmap, title, x_ax, pmt_letters, save_map = save_map)
     plot_heatmap_ultra_basic(heatmap_ratio_appended, title, x_ax_new, pmt_letters_appended, save_map = save_map)
     
+
+class dist_plots():
+    """Everything to do with 1d-distributions. Takes an unlabled heatmap as input."""
+    def __init__(self, heatmap):
+        print(heatmap)
+        self.heatmap = heatmap
+
+    
+
+    def plot_dist(self, num_bins = 50):
+        """Plots heatmap into a 1d distributions."""
+        heatmap = self.heatmap[~np.isnan(self.heatmap)]
+        counts, bins = np.histogram(heatmap, bins=num_bins)
+        plt.stairs(counts, bins)
+        plt.show()
+        return 0;
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 
