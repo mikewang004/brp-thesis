@@ -246,8 +246,20 @@ class meanhitrate():
         return 0;
 
 
-    #def filter_data(self):
-
+    def filter_equator_tape(self, meanhitrate, pmt_range = "all", filter = False):
+        """Filters out specific PMTs E2 E6 C2 C5 (DAQs 6 11 20 21).
+           If filter = False, return only PMTs that are NOT equator-tape-shadowed. Else only return those that are."""
+        newmeanhitrate = meanhitrate.copy()
+        shadowed_pmts = [6, 11, 20, 21]
+        shadowed_mask = np.zeros(newmeanhitrate.shape[1])
+        shadowed_mask[shadowed_pmts] = 1
+        if filter != False:
+            shadowed_mask = 1 - shadowed_mask
+        masked_floor_str_hit = np.ma.masked_array(newmeanhitrate[:, :, 2], np.tile(shadowed_mask, (1,newmeanhitrate.shape[0])))
+        masked_floor_str_hit_2 = np.ma.masked_array(newmeanhitrate[:, :, 7], np.tile(shadowed_mask, (1, newmeanhitrate.shape[0])))
+        newmeanhitrate[:, :, 2] = masked_floor_str_hit.filled(fill_value= np.nan)
+        newmeanhitrate[:, :, 7] = masked_floor_str_hit_2.filled(fill_value = np.nan)
+        return newmeanhitrate
 
     def plot_all_strings(self):
         "Plots rate vs efficieny for all strings"
@@ -346,7 +358,6 @@ class meanhitrate():
                     else:
                         plt.title("Rate vs efficiency for DU %i, %s PMTs only" %(self.meanhitrate[i-1,0, 3], low_high_str))
                         plt.savefig("plots/all-data/%s_pmts_rate_eff_string_%i.pdf" %(low_high_str, self.meanhitrate[i-1, 0, 3]))
-                    j = i 
                     plt.close()
                 else: #plot == False
                     if type(meanhitrate_old) != type(None):
@@ -355,7 +366,70 @@ class meanhitrate():
                     if type(meanhitrate_new) != type(None):
                         popt2 = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
                         popt_arr[1, l] = popt2
-                l = l + 1
+                l = l + 1; j = i 
+            if i == 377:
+                return popt_arr
+
+
+    def plot_all_strings_equator_tape(self, pmt_start = 0, pmt_stop = 31, pmt_range = "all", plot = True):
+        "Plots rate vs efficieny for all strings. Note pmts are arranged in the second dimension based on rings, so that "
+        "ring E-F denoted by index 18-30; pmt_range = {lower, upper, all}"
+        j = 0; x_eff = np.linspace(0, 1.4, 100); l = 0
+        err = 0.05 # just assume this 
+        popt_arr = np.zeros([2, int(self.meanhitrate.shape[0]/18)]) * np.nan
+        if pmt_range == "lower":
+            pmt_start, pmt_stop = 0, 18
+            low_high_str = "lower"
+        elif pmt_range == "upper":
+            pmt_start, pmt_stop = 18, 31
+            low_high_str = "upper"
+        for i in range(1, self.meanhitrate.shape[0]): #checks for start new string
+        #for i in range(1, 100):
+            if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == 377: #checks for start new string
+                meanhitrate_old = self.filter_equator_tape(self.meanhitrate[j:i, :, :], filter = False)
+                meanhitrate_new = self.filter_equator_tape(self.meanhitrate[j:i, :, :], filter = True)
+                if plot == True:
+                    plt.figure()
+                    #popt = self.fit_lin_func_eff_rate(self.meanhitrate[j:i, pmt_start:pmt_stop, :])
+                    #xerr, yerr = self.meanhitrate[j:i, :, 2] * err, self.meanhitrate[j:i, :, 7] * err
+                    #plt.plot(x_eff, lin_func(x_eff, *popt), color = "green", label = "all PMT fit, slope is %f [kHz]/[eff]" %popt)
+                    if type(meanhitrate_old) != type(None): #not-shadow PMTs
+                        popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+                        xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
+                        for j in range (pmt_start, pmt_stop):
+                            plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
+                            xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
+                        plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "non-equator PMT fit, slope %f [kHz]/[eff]" %popt)
+                        popt_arr[0, l] = popt
+                    if type(meanhitrate_new) != type(None): #shadow PMTs
+                        popt = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+                        xerr, yerr = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
+                        for j in range(pmt_start, pmt_stop):
+                            plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
+                            xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
+                        plt.plot(x_eff, lin_func(x_eff, *popt), color = "orange", label = "equator PMT fit, slope is %f [kHz]/[eff]" %popt)
+                        popt_arr[1, l] = popt
+                    #Fit also for all PMTs
+                    plt.ylim(0, 10)
+                    plt.xlim(0, 1.3)
+                    plt.xlabel("Efficiency")
+                    plt.ylabel("Rate [kHz]")
+                    plt.legend()
+                    if pmt_range == "all":
+                        plt.title("Rate vs efficiency for DU %i, all PMTs" %(self.meanhitrate[i-1,0, 3]))
+                        plt.savefig("../plots/rate-eff/equator-tape/all_pmts_eq_rate_eff_string_%i.pdf" %(self.meanhitrate[i-1, 0, 3]))
+                    else:
+                        plt.title("Rate vs efficiency for DU %i, %s PMTs only" %(self.meanhitrate[i-1,0, 3], low_high_str))
+                        plt.savefig("../plots/rate-eff/equator-tape/%s_pmts_eqrate_eff_string_%i.pdf" %(low_high_str, self.meanhitrate[i-1, 0, 3]))
+                    plt.close()
+                else: #plot == False
+                    if type(meanhitrate_old) != type(None):
+                        popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+                        popt_arr[0, l] = popt
+                    if type(meanhitrate_new) != type(None):
+                        popt2 = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+                        popt_arr[1, l] = popt2
+                l = l + 1; j = i 
             if i == 377:
                 return popt_arr
 
@@ -396,6 +470,7 @@ class meanhitrate():
         plt.close()
         return 0;
 
+
 run_numbers = np.arange(14413,14440, 1)
 #run_numbers = np.arange(14413, 14415, 1)
 #test = extract_mean_hit_rate(run_numbers)
@@ -411,10 +486,11 @@ pmt_range_list = ["all", "upper", "lower"]
 def plot_all_eff_range_str_plots(pmt_range_list = pmt_range_list, plot = True):
     popt_arr = []
     for s in pmt_range_list:
-        popt_arr.append(test2.plot_all_strings_no_mean(pmt_range = s, plot = plot))
+        #popt_arr.append(test2.plot_all_strings_no_mean(pmt_range = s, plot = plot))
+        popt_arr.append(test2.plot_all_strings_equator_tape(pmt_range = s, plot= plot))
     return popt_arr
 
-popt_all, popt_upper, popt_lower = plot_all_eff_range_str_plots(plot = True)
+popt_all, popt_upper, popt_lower = plot_all_eff_range_str_plots(plot = False)
 print(popt_all)
 # For DOM-gel issue:
 # String 12 is 3 sigma away from average; affected DOMs in string 10 

@@ -122,11 +122,20 @@ class map_hit_data():
         self.floor_str_hit = floor_str_hit
         return 0;
 
-    def apply_shadow_mask(self):
-        """Filters out the shadowed PMTs namely C2 C5 E2 E5 or channel numbers 1 6 20 21"""
-        for i in [1, 6, 20, 21]:
-            self.floor_str_hit[:, i, 4] = np.nan
-            self.floor_str_hit[:, i, 5] = np.nan
+    def apply_shadow_mask(self, filter = True):
+        """Filters out specific PMTs E2 E6 C2 C5 (DAQs 6 11 20 21).
+           If filter = False, return only PMTs that are NOT equator-tape-shadowed. Else only return those that are."""
+        shadowed_pmts = [6, 11, 20, 21]
+        shadowed_mask = np.zeros(self.floor_str_hit.shape[1])
+        shadowed_mask[shadowed_pmts] = 1
+        new_floor_str_hit = self.floor_str_hit
+        if filter != False:
+            shadowed_mask = 1 - shadowed_mask
+        masked_floor_str_hit = np.ma.masked_array(new_floor_str_hit[:, :, 4], np.tile(shadowed_mask, (1,new_floor_str_hit.shape[0])))
+        masked_floor_str_hit_2 = np.ma.masked_array(new_floor_str_hit[:, :, 5], np.tile(shadowed_mask, (1, new_floor_str_hit.shape[0])))
+        new_floor_str_hit[:, :, 4] = masked_floor_str_hit.filled(fill_value= np.nan)
+        new_floor_str_hit[:, :, 5] = masked_floor_str_hit_2.filled(fill_value = np.nan)
+        self.floor_str_hit = new_floor_str_hit
         return 0;
 
     def apply_pmt_mask(self, new_versions=1):
@@ -240,7 +249,7 @@ class heatmap():
     def append_mean_row_column(self, indices, append_list_1 = None, append_list_2 = None, heatmap = None, include_mean_of_mean = False):
         """Appends the mean to all rows and columns in the heatmap. Also appends floorlist and stringlist 
         to reflect this."""
-        if append_list_1 == None and append_list_2 == None:
+        if type(append_list_1) == type(None) and type(append_list_2) == type(None):
             floorlist = self.floorlist.copy(); stringlist = self.stringlist.copy()
             stringlist.append("mean")
             floorlist.append("mean")
@@ -283,7 +292,7 @@ class heatmap():
                     new_heatmap[i, -1, -1] = np.nanmean(new_heatmap[i, :-1, :-1])
             else:
                 new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
-        if append_list_1 == None and append_list_2 == None:
+        if type(append_list_1) == type(None) and type(append_list_2) == type(None):
             return new_heatmap, floorlist, stringlist
         else:
             return new_heatmap, append_list_a, append_list_b
@@ -581,18 +590,25 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
 
 class dist_plots():
     """Everything to do with 1d-distributions. Takes an unlabled heatmap as input."""
-    def __init__(self, heatmap):
-        print(heatmap)
-        self.heatmap = heatmap
+    def __init__(self, heatmap_array):
+        self.heatmap = heatmap_array
 
-    
-
-    def plot_dist(self, num_bins = 50):
-        """Plots heatmap into a 1d distributions."""
+    def generate_counts_bins(self, num_bins = 50):
         heatmap = self.heatmap[~np.isnan(self.heatmap)]
         counts, bins = np.histogram(heatmap, bins=num_bins)
+        return counts, bins 
+
+    def plot_dist(self, xlabel=None, title=None, num_bins = 50, save_map = None):
+        """Plots heatmap into a 1d distributions."""
+        counts, bins = self.generate_counts_bins(num_bins = num_bins)
+        plt.figure()
         plt.stairs(counts, bins)
-        plt.show()
+        plt.xlabel(xlabel)
+        plt.title(title)
+        plt.ylabel("count")
+        if save_map != None:
+            write_path = save_map + str('/%s.pdf' %(title.replace(" ", "-")))
+            plt.savefig(write_path)
         return 0;
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
