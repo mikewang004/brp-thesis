@@ -16,6 +16,7 @@ import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.colors as colors
+from scipy.stats import norm
 
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
@@ -415,7 +416,7 @@ class heatmap():
 
 
     def plot_heatmap_summarised_ring(self, indices, pmt_letters, title, save = "Yes", 
-        save_map=None, string = True, x_ax = None, include_mean = False, include_mean_of_mean = False):
+        save_map=None, string = True, x_ax = None, include_mean = False, include_mean_of_mean = False, zmin = None, zmax = None):
         """Summarises the mean per string or per floor into a single heatmap. If string = false then floor plot.
         If x_ax != None then already assumsed self.summarise_per_ring executed"""
         colorscale = colors.sequential.Sunset
@@ -447,8 +448,10 @@ class heatmap():
             ),
         )
         #zmax = np.nanmax(heatmap_summarised); zmin = np.nanmin(heatmap_summarised)
-        zmin = np.nanmean(heatmap_summarised) - 2 * np.nanstd(heatmap_summarised)
-        zmax = np.nanmean(heatmap_summarised) + 2 * np.nanstd(heatmap_summarised)
+        if type(zmin) == type(None):
+            zmin = np.nanmean(heatmap_summarised) - 2 * np.nanstd(heatmap_summarised)
+        if type(zmax) == type(None):
+            zmax = np.nanmean(heatmap_summarised) + 2 * np.nanstd(heatmap_summarised)
         fig = go.Figure(data = go.Heatmap(z=heatmap_summarised, text = annotation_text, 
             texttemplate="%{text}", colorscale=colorscale, zmin=zmin, zmax=zmax), layout = layout)
         if save == "Yes":
@@ -587,16 +590,24 @@ def summarised_heatmap_ratio(heatmap_num, heatmap_denom, title, indices, pmt_let
     #plot_heatmap_ultra_basic(heatmap_ratio.heatmap, title, x_ax, pmt_letters, save_map = save_map)
     plot_heatmap_ultra_basic(heatmap_ratio_appended, title, x_ax_new, pmt_letters_appended, save_map = save_map)
     
+def get_zminmax(heatmap):
+    zmin = np.nanmean(heatmap) - 1 * np.nanstd(heatmap)
+    zmax = np.nanmean(heatmap) + 1 * np.nanstd(heatmap)
+    return zmin, zmax
+
 
 class dist_plots():
     """Everything to do with 1d-distributions. Takes an unlabled heatmap as input."""
     def __init__(self, heatmap_array):
         self.heatmap = heatmap_array
+        #
 
     def generate_counts_bins(self, num_bins = 50):
         heatmap = self.heatmap[~np.isnan(self.heatmap)]
+        heatmap = heatmap[heatmap > 0.4]
         counts, bins = np.histogram(heatmap, bins=num_bins)
-        return counts, bins 
+        mu, sigma = norm.fit(heatmap)
+        return counts, bins, mu, sigma
 
     def plot_dist(self, xlabel=None, title=None, num_bins = 50, save_map = None):
         """Plots heatmap into a 1d distributions."""
@@ -609,6 +620,30 @@ class dist_plots():
         if save_map != None:
             write_path = save_map + str('/%s.pdf' %(title.replace(" ", "-")))
             plt.savefig(write_path)
+        return 0;
+
+    def plot_dist_barebones(self, num_bins = 50, label = None):
+        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins)
+        if type(label) == type(None):
+            plt.stairs(counts, bins)
+        else:
+            label = label + ', $\mu=%.3f, \sigma=%.3f$' %(mu, sigma)
+            plt.stairs(counts, bins, label = label)
+        return 0;
+
+    def plot_dist_forloop(self, pmt_letters, num_bins = 50):
+        "For multiple rings in a row."
+        for i in range(0, self.heatmap.shape[0]):
+            heatmap = self.heatmap[i, :, :]
+            heatmap = heatmap[~np.isnan(heatmap)]
+            counts, bins = np.histogram(heatmap)
+            plt.stairs(counts, bins, label = "PMT ring %s" %(pmt_letters[i]))
+        return 0;
+
+    def plot_dist_save(self, title, save_map):
+        plt.title(title)
+        write_path = save_map + str('/%s.pdf' %(title.replace(" ", "-")))
+        plt.savefig(write_path)
         return 0;
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
