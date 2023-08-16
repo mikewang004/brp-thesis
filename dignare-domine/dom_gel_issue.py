@@ -39,23 +39,26 @@ inv_gel_mask = ma.filled(inv_gel_mask, np.nan)
 
 # plot_heatmap_ultra_basic(gel_mask, "Efficiencies per no gel-issue DOM, lower half PMTs only", 
 #     stringlist, floorlist, save_map = "plots/gel-issue", include_mean=True)
-lower_bound = 0.75; upper_bound = 0.91
+lower_bound = 0.5; upper_bound = 1.2
 
 #Now plot the distribution 
 eff_all_27 = eff_all_31[:, :, 17]; cond_27 = (eff_all_27 > lower_bound) & (eff_all_27 < upper_bound)
 eff_all_27 = eff_all_27[cond_27]
-dist_mask_10 = dist_plots(eff_all_31[:18, 6:15, 2])
-dist_mask_12= dist_plots(eff_all_31[:18, :, 4])
-dist_mask_27= dist_plots(eff_all_27)
+#dist_mask_10 = dist_plots(eff_all_31[:18, 6:15, 2])
+#dist_mask_12= dist_plots(eff_all_31[:18, :, 4])
+#dist_mask_27= dist_plots(eff_all_27)
+dist_mask_10 = dist_plots(eff_all_31[:, 6:15, 2]); dist_mask_12 = dist_plots(eff_all_31[:, :, 4]); dist_mask_27 = dist_plots(eff_all_31[:, :, 17])
 #dist_gel_mask = dist_plots(gel_mask); dist_inv_gel_mask = dist_plots(inv_gel_mask)
 
-bins = 20; range = (lower_bound, upper_bound)
+bins = 40; range = (.5, 1.2)
 dist_mask_10.plot_dist_barebones(num_bins = bins, label = "string 10", range = range)
 dist_mask_12.plot_dist_barebones(num_bins = bins, label = "string 12", range = range)
 dist_mask_27.plot_dist_barebones(num_bins = bins, label = "string 27", range = range)
 plt.xlabel("efficiency")
 plt.ylabel("count")
+plt.axvline(x = 0.891, color = 'r', ls = ':', label = "efficiency cutoff")
 plt.legend()
+#plt.show()
 dist_mask_27.plot_dist_save("Distribution of efficiencies, suspected gel issue DOMs", "plots/gel-issue")
 #dist_mask_27.plot_dist_save("Distribution of efficiencies, strings 10 and 27", "plots/gel-issue")
 

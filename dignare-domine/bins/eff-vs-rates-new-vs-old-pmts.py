@@ -261,6 +261,25 @@ class meanhitrate():
         newmeanhitrate[:, :, 7] = masked_floor_str_hit_2.filled(fill_value = np.nan)
         return newmeanhitrate
 
+    def filter_gel_issue(self, meanhitrate, pmt_range = "all", filter = False):
+        """if filter = False return only DOMs that are not part of the issue, otherwise do return issue DOMs."""
+        newmeanhitrate = meanhitrate.copy()
+        affected_strings = [10, 12, 27]; filter_index = np.full(newmeanhitrate.shape[0], 1)
+        if newmeanhitrate[0, 0, 4] in affected_strings:
+            if newmeanhitrate[0, 4] == 10:
+                #Set filter only for DOMs 7-15
+                filter_index[7:16] = 0
+            else:
+                filter_index[0:18] = 0
+        if filter != False:
+            filter_index = filter_index - 1
+        masked_floor_str_hit = np.ma.masked_array(newmeanhitrate[:, :, 2], np.tile(filter_index, (1,newmeanhitrate.shape[1])))
+        masked_floor_str_hit_2 = np.ma.masked_array(newmeanhitrate[:, :, 7], np.tile(filter_index, (1, newmeanhitrate.shape[1])))
+        newmeanhitrate[:, :, 2] = masked_floor_str_hit.filled(fill_value= np.nan)
+        newmeanhitrate[:, :, 7] = masked_floor_str_hit_2.filled(fill_value = np.nan)
+        return newmeanhitrate
+            
+
     def plot_all_strings(self):
         "Plots rate vs efficieny for all strings"
         j = 0
@@ -470,6 +489,64 @@ class meanhitrate():
         plt.close()
         return 0;
 
+        def gel_issue_plot():
+            j = 0; x_eff = np.linspace(0, 1.4, 100); l = 0
+            err = 0.05 # just assume this 
+            popt_arr = np.zeros([2, int(self.meanhitrate.shape[0]/18)]) * np.nan
+            if pmt_range == "lower":
+                pmt_start, pmt_stop = 0, 18
+                low_high_str = "lower"
+            elif pmt_range == "upper":
+                pmt_start, pmt_stop = 18, 31
+                low_high_str = "upper"
+            for i in range(1, self.meanhitrate.shape[0]): #checks for start new string
+            #for i in range(1, 100):
+                if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == 377: #checks for start new string
+                    meanhitrate_old = self.filter_gel_issue(self.meanhitrate[j:i, :, :], filter = False)
+                    meanhitrate_new = self.filter_gel_issue(self.meanhitrate[j:i, :, :], filter = True)
+                    if plot == True:
+                        plt.figure()
+                        if type(meanhitrate_old) != type(None): #not-shadow PMTs
+                            popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+                            xerr, yerr = meanhitrate_old[:, :, 2] * err, meanhitrate_old[:, :, 7] * err
+                            for j in range (pmt_start, pmt_stop):
+                                plt.errorbar(meanhitrate_old[:, j, 2], meanhitrate_old[:, j, 7], 
+                                xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "blue") # version R12199
+                            plt.plot(x_eff, lin_func(x_eff, *popt), color = "blue", label = "non-gel-biased DOM fit, slope %f [kHz]/[eff]" %popt)
+                            popt_arr[0, l] = popt
+                        if type(meanhitrate_new) != type(None): #shadow PMTs
+                            popt = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+                            xerr, yerr = meanhitrate_new[:, :, 2] * err, meanhitrate_new[:, :, 7] * err
+                            for j in range(pmt_start, pmt_stop):
+                                plt.errorbar(meanhitrate_new[:, j, 2], meanhitrate_new[:, j, 7], 
+                                xerr = xerr[:, j], yerr = yerr[:, j], fmt = ".", color = "orange") #version R14374
+                            plt.plot(x_eff, lin_func(x_eff, *popt), color = "orange", label = "gel-biased DOM fit, slope is %f [kHz]/[eff]" %popt)
+                            popt_arr[1, l] = popt
+                        #Fit also for all PMTs
+                        plt.ylim(0, 10)
+                        plt.xlim(0, 1.3)
+                        plt.xlabel("Efficiency")
+                        plt.ylabel("Rate [kHz]")
+                        plt.legend()
+                        if pmt_range == "all":
+                            plt.title("Rate vs efficiency for DU %i, all PMTs" %(self.meanhitrate[i-1,0, 3]))
+                            plt.savefig("../plots/rate-eff/gel-issue/all_pmts_eq_rate_eff_string_%i.pdf" %(self.meanhitrate[i-1, 0, 3]))
+                        else:
+                            plt.title("Rate vs efficiency for DU %i, %s PMTs only" %(self.meanhitrate[i-1,0, 3], low_high_str))
+                            plt.savefig("../plots/rate-eff/gel-issue/%s_pmts_eqrate_eff_string_%i.pdf" %(low_high_str, self.meanhitrate[i-1, 0, 3]))
+                        plt.close()
+                    else: #plot == False
+                        if type(meanhitrate_old) != type(None):
+                            popt = self.fit_lin_func_eff_rate(meanhitrate_old[:, pmt_start:pmt_stop, :])
+                            popt_arr[0, l] = popt
+                        if type(meanhitrate_new) != type(None):
+                            popt2 = self.fit_lin_func_eff_rate(meanhitrate_new[:, pmt_start:pmt_stop, :])
+                            popt_arr[1, l] = popt2
+                    l = l + 1; j = i 
+                if i == 377:
+                    return popt_arr
+
+
 
 run_numbers = np.arange(14413,14440, 1)
 #run_numbers = np.arange(14413, 14415, 1)
@@ -487,7 +564,8 @@ def plot_all_eff_range_str_plots(pmt_range_list = pmt_range_list, plot = True):
     popt_arr = []
     for s in pmt_range_list:
         #popt_arr.append(test2.plot_all_strings_no_mean(pmt_range = s, plot = plot))
-        popt_arr.append(test2.plot_all_strings_equator_tape(pmt_range = s, plot= plot))
+        #popt_arr.append(test2.plot_all_strings_equator_tape(pmt_range = s, plot= plot))
+        popt_arr.append(test2.gel_issue_plot(pmt_range = s, plot= plot))
     return popt_arr
 
 popt_all, popt_upper, popt_lower = plot_all_eff_range_str_plots(plot = False)
