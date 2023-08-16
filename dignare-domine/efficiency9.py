@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 import plotly.colors as colors
 from scipy import stats
 
-pio.kaleido.scope.mathjax= None
+#pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
 muon_hit_data_sim = np.load("data/muon_hit_data-sim-reduced_bins-xx1375x.npy")
