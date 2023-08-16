@@ -16,7 +16,7 @@ import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.colors as colors
-from scipy.stats import norm
+from scipy import stats
 
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
@@ -231,11 +231,26 @@ class map_hit_data():
         for i in range(0, len(indices)-1):
             heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff)
         return heatmap
+
+    def export_all_31_layers(self, int_rates_or_eff = 4):
+        pmt_group_mean_sorted = self.floor_str_hit.copy()
+        for m in range(0, 31):
+            pmt_group_pairs = self.floor_str_hit[:, m, :]
+            pmt_group_mean_sorted[:, m, :] = self.heatmap_averages_single_loop(pmt_group_pairs) #Sorts the thing on string and floor so that they are in sequence. 
+        floorlist = np.unique(pmt_group_mean_sorted[:, 0, 1]).tolist(); stringlist = np.unique(pmt_group_mean_sorted[:, 0, 0]).tolist()
+        heatmap = np.zeros([31, len(floorlist), len(np.unique(stringlist))])
+        for i in range(0, 31):
+            heatmap[i, :, :] = self.heatmap_array_single_group(pmt_group_mean_sorted[:, i, :], i, heatmap[i, :, :], floorlist, stringlist, int_rates_or_eff)
+        return heatmap
     
 
 def speedrun_heatmap(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floorlist = floorlist, stringlist = stringlist, int_rates_or_eff = 4, apply_shadow_mask = False):
     hit_runs_arr = map_hit_data(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions= new_versions, apply_shadow_mask= apply_shadow_mask)
     return heatmap(hit_runs_arr.export_heatmap(indices, int_rates_or_eff = int_rates_or_eff))
+
+def speedrun_heatmap_31(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floorlist = floorlist, stringlist = stringlist, int_rates_or_eff = 4, apply_shadow_mask = False):
+    hit_runs_arr = map_hit_data(muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions= new_versions, apply_shadow_mask= apply_shadow_mask)
+    return heatmap(hit_runs_arr.export_all_31_layers(int_rates_or_eff = int_rates_or_eff))
 
 class heatmap():
     """Class to generate heatmap plots with string and/or floor information. Also useful to perform heatmap operations with."""
@@ -602,16 +617,17 @@ class dist_plots():
         self.heatmap = heatmap_array
         #
 
-    def generate_counts_bins(self, num_bins = 50):
+    def generate_counts_bins(self, num_bins = 50, range = None):
         heatmap = self.heatmap[~np.isnan(self.heatmap)]
         heatmap = heatmap[heatmap > 0.4]
-        counts, bins = np.histogram(heatmap, bins=num_bins)
-        mu, sigma = norm.fit(heatmap)
+        counts, bins = np.histogram(heatmap, bins=num_bins, range = range)
+        mu, sigma = stats.norm.fit(heatmap)
+        self.counts = counts; self.bins = bins
         return counts, bins, mu, sigma
 
     def plot_dist(self, xlabel=None, title=None, num_bins = 50, save_map = None):
         """Plots heatmap into a 1d distributions."""
-        counts, bins = self.generate_counts_bins(num_bins = num_bins)
+        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins)
         plt.figure()
         plt.stairs(counts, bins)
         plt.xlabel(xlabel)
@@ -622,8 +638,8 @@ class dist_plots():
             plt.savefig(write_path)
         return 0;
 
-    def plot_dist_barebones(self, num_bins = 50, label = None):
-        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins)
+    def plot_dist_barebones(self, num_bins = 50, label = None, range = None):
+        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins, range = range)
         if type(label) == type(None):
             plt.stairs(counts, bins)
         else:

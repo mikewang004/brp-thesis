@@ -13,6 +13,10 @@ hits_real_all = speedrun_heatmap(muon_hit_data_real, modid_map, pmt_serial_map, 
 hits_sim_all = speedrun_heatmap(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= apply_shadow_mask)
 hits_ratio_all = heatmap(hits_real_all.heatmap/hits_sim_all.heatmap)
 
+eff_all[:, 6:16, 3] = np.nan
+eff_all[:, :, 4] = np.nan
+
+print(eff_all.shape)
 # hits_real_all.plot_heatmap(indices, pmt_letters, "Mean hits per DOM", save_map = "plots/hits/rings")
 #hits_ratio_all.plot_heatmap(indices, pmt_letters, "Ratio of data vs MC hits per DOM", save_map = "plots/data-mc/rings", 
 #    include_mean=True)
@@ -49,4 +53,4 @@ dist_plots_upper.plot_dist_barebones(label = "rings E-F")
 plt.xlabel("efficiency")
 plt.ylabel("count")
 plt.legend()
-dist_plots_lower.plot_dist_save("Distribution of efficiencies, all DOMs, seperate by ring", "plots/efficiencies")
+dist_plots_lower.plot_dist_save("Distribution of efficiencies, all strings except string 9 and 12", "plots/efficiencies")
