@@ -272,7 +272,9 @@ class meanhitrate():
         if newmeanhitrate[0, 0, 3] in affected_strings:
             if newmeanhitrate[0,0,  3] == 10:
                 #Set filter only for DOMs 7-15
-                filter_index[7:16] = 0
+                filter_index[6:15] = 0
+            elif newmeanhitrate[0,0,3] == 27:
+                filter_index[2] = 0; filter_index[4:9] = 0; filter_index[10:14] = 0; filter_index[15:17] = 0
             else:
                 filter_index[0:18] = 0
         if filter == False:
@@ -576,9 +578,9 @@ def plot_all_eff_range_str_plots(pmt_range_list = pmt_range_list, plot = True):
         popt_arr.append(test2.gel_issue_plot(pmt_range = s, plot= plot))
     return popt_arr
 
-popt_all, popt_upper, popt_lower = plot_all_eff_range_str_plots(plot = False)
+popt_all, popt_upper, popt_lower = plot_all_eff_range_str_plots(plot = True)
 print(popt_lower)
-print(np.nanmean(popt_lower[0, :]), np.nanstd(popt_lower[0, :]))
+print(np.nanmean(popt_lower[:, :]), np.nanstd(popt_lower[:, :]))
 # For DOM-gel issue:
 # String 12 is 3 sigma away from average; affected DOMs in string 10 
 
