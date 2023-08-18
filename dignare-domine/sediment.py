@@ -2,7 +2,7 @@ from efficiency9 import *
 
 #start_index = 6; stop_index = 17
 start_index = 7; stop_index = 16 
-apply_shadow_mask = False
+apply_shadow_mask = None
 
 data_real_old = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, new_versions = 0)
 data_real_new = map_hit_data(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, new_versions = 1)

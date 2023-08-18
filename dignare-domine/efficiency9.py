@@ -18,7 +18,7 @@ import plotly.graph_objects as go
 import plotly.colors as colors
 from scipy import stats
 
-#pio.kaleido.scope.mathjax= None
+pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
 muon_hit_data_sim = np.load("data/muon_hit_data-sim-reduced_bins-xx1375x.npy")
@@ -46,7 +46,7 @@ class map_hit_data():
 
     """Workflow as follows: data loadin is as 2d array with column as above. Then data gets appended, upon which the array gets transformed to 3d 
     with the pmt number being the 3rd dimension. Then data reorganised into heatmap."""
-    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floor_str_hit = None, apply_shadow_mask = False):
+    def __init__(self, muon_hit_data, pmt_id_map, pmt_serial_map, magic_number, new_versions = None, floor_str_hit = None, apply_shadow_mask = None):
         self.modid_map = modid_map
         self.eff_list = eff_list    
         self.pmt_serial_map = pmt_serial_map; self.magic_number = magic_number
@@ -55,8 +55,8 @@ class map_hit_data():
             self.append_eff_data()
             self.append_pmt_serials()
             self.mod_id_to_floor_string()
-            if apply_shadow_mask == True:
-                self.apply_shadow_mask()
+            if apply_shadow_mask != None:
+                self.apply_shadow_mask(filter = apply_shadow_mask) #can be True or False
             self.pmt_no_to_ring_letter()
             if new_versions != None: 
                 self.apply_pmt_mask(new_versions = new_versions)
@@ -405,13 +405,16 @@ class heatmap():
                 zmax = np.nanmax(heatmap_current)
                 zmax_array[i] = zmax
             else:
-                zmax = zmax_array[i]
+                zmax = zmax_array
             if zmin_present == False:
                 zmin = np.nanmin(heatmap_current[heatmap_current != 0])
                 zmin_array[i] = zmin
             else:
-                zmin = zmin_array[i]
-            fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin2, zmax=zmax2, zauto=False), layout = layout)
+                zmin = zmin_array
+            if zmax_present == False:
+                fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin2, zmax=zmax2, zauto=False), layout = layout)
+            else:
+                fig = go.Figure(data = go.Heatmap(z=heatmap_current, text = annotation_text, texttemplate="%{text}", colorscale=colorscale, zmin=zmin_array, zmax=zmax_array, zauto=False), layout = layout)
             #print("Average of hits is %f +- %f" %(np.nanmean(self.heatmap[i, :, :]), np.nanstd(self.heatmap[i, :, :])))
             #fig.show()
             if save == "Yes":
@@ -620,6 +623,8 @@ class dist_plots():
     def generate_counts_bins(self, num_bins = 50, range = None):
         heatmap = self.heatmap[~np.isnan(self.heatmap)]
         heatmap = heatmap[heatmap > 0.4]
+        heatmap = heatmap[heatmap < 3]
+        print(heatmap)
         counts, bins = np.histogram(heatmap, bins=num_bins, range = range)
         mu, sigma = stats.norm.fit(heatmap)
         self.counts = counts; self.bins = bins
@@ -664,5 +669,10 @@ class dist_plots():
 
 #plot_ratio_eff_one_plot(sim_ratio_eff_map, indices)
 
+
+
+def remove_nan(x):
+    y = x[~np.isnan(x)]
+    return y
 
 
