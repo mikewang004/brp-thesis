@@ -23,25 +23,33 @@ muon_hit_data_ratio_shadow = (speedrun_heatmap_31(muon_hit_data_real, modid_map,
 
 #Look now at data/mc ratios 
 apply_shadow_mask = True
-hits_real_else = speedrun_heatmap(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= apply_shadow_mask)
-hits_sim_else = speedrun_heatmap(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= apply_shadow_mask)
-hits_ratio_else = heatmap(hits_real_else.heatmap/hits_sim_else.heatmap)
+hits_real_shadowed = speedrun_heatmap_31(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= apply_shadow_mask)
+hits_sim_shadowed = speedrun_heatmap_31(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= apply_shadow_mask)
+hits_ratio_shadowed = heatmap(hits_real_shadowed.heatmap/hits_sim_shadowed.heatmap)
 
-hits_ratio_shadowed = heatmap(speedrun_heatmap(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= False).heatmap/
-    speedrun_heatmap(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= False).heatmap)
+hits_ratio_else = heatmap(speedrun_heatmap_31(muon_hit_data_real, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= False).heatmap/
+    speedrun_heatmap_31(muon_hit_data_sim, modid_map, pmt_serial_map, magic_number, apply_shadow_mask= False).heatmap)
+
+# Compare differencence between shadowed and else heatmaps 
+
+#hits_ratio_ratio = heatmap(((hits_ratio_else.heatmap - hits_ratio_shadowed.heatmap)/hits_ratio_shadowed.heatmap)*100)
+
+#print(np.nanmean(hits_ratio_ratio.heatmap[4:, :12, 18:]))
+
+#hits_ratio_ratio.plot_heatmap(indices, pmt_letters, "Differences between shadowed and non-shadowed PMTs", save_map="plots/shadowing/rings/data-mc", include_mean=True, zmax_array =40, zmin_array = -40)
 
 
+#hits_ratio_shadowed.plot_heatmap(indices, pmt_letters, "Ratio of data over MC hits, shadowed PMTs only", save_map="plots/shadowing/rings/data-mc", include_mean=True, zmax_array =1.0, zmin_array = 0.65)
+#hits_ratio_else.plot_heatmap(indices, pmt_letters, "Ratio of data over MC hits, non-shadowed PMTs only", save_map="plots/shadowing/rings/data-mc", include_mean=True, zmax_array =1.0, zmin_array = 0.65)
 
-#hits_ratio_else.plot_heatmap(indices, pmt_letters, "Ratio of data over MC hits, shadowed PMTs only", save_map="plots/shadowing/rings/data-mc", include_mean=True, zmax_array =1.0, zmin_array = 0.65)
-
-#Create distributions 
+# #Create distributions 
 #dist_all = dist_plots(hits_ratio_shadowed.heatmap)
 #dist_shadowed = dist_plots(hits_ratio_.heatmap)
 dist_non_shadowed = dist_plots(muon_hit_data_ratio_else)
-dist_lower_shadowed = dist_plots(muon_hit_data_ratio_shadow[:18, :, :])
-dist_upper_shadowed = dist_plots(muon_hit_data_ratio_shadow[18:, :, :])
-dist_lower_clean = dist_plots(muon_hit_data_ratio_else[:18, :, :])
-dist_upper_clean = dist_plots(muon_hit_data_ratio_else[18:, :, :])
+dist_lower_shadowed = dist_plots(muon_hit_data_ratio_shadow[11:, :, :])
+dist_upper_shadowed = dist_plots(muon_hit_data_ratio_shadow[:11, :, :])
+dist_lower_clean = dist_plots(muon_hit_data_ratio_else[11:, :, :])
+dist_upper_clean = dist_plots(muon_hit_data_ratio_else[:11, :, :])
 bins = 150; range = (0.4, 1.3)
 #dist_all.plot_dist_barebones(label = "all PMTs", num_bins = bins, range = range)
 #dist_shadowed.plot_dist_barebones(label = "all shadowed PMTs", num_bins = bins, range = range)
@@ -55,5 +63,5 @@ plt.ylabel("count")
 plt.legend(loc="upper left", fontsize="x-small")
 dist_non_shadowed.plot_dist_save("Distribution of data over MC ratio, shadowed and non-shadowed PMTs", "plots/shadowing")
 
-print(stats.ks_2samp(dist_lower_shadowed.counts, dist_lower_clean.counts))
-print(stats.ks_2samp(dist_upper_shadowed.counts, dist_upper_clean.counts))
+# print(stats.ks_2samp(dist_lower_shadowed.counts, dist_lower_clean.counts))
+# print(stats.ks_2samp(dist_upper_shadowed.counts, dist_upper_clean.counts))

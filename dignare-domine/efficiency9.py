@@ -112,14 +112,13 @@ class map_hit_data():
             self.floor_str_hit[:, i, 3] = pmt_ring_map[i, 1]
         # Then sort the thing so that ring A is appearing first, then B, etc. 
         floor_str_hit = np.zeros(self.floor_str_hit.shape)
-        floor_str_hit[:, 0, :] = self.floor_str_hit[:, 22, :]
-        j = 2; i = 1
-        for l in range(0, 6):
+        floor_str_hit[:, 0, :] = self.floor_str_hit[:, 22, :] #specific case that ring A is DAQ 22
+        i = 1
+        for l in range(2, 7):
             for k in range(0, 31):
-                if self.floor_str_hit[0, k, 3] == j:
+                if self.floor_str_hit[0, k, 3] == l:
                     floor_str_hit[:, i, :] = self.floor_str_hit[:, k, :]
                     i = i + 1
-            j = j + 1
         self.floor_str_hit = floor_str_hit
         return 0;
 
