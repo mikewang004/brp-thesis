@@ -619,11 +619,12 @@ class dist_plots():
         self.heatmap = heatmap_array
         #
 
-    def generate_counts_bins(self, num_bins = 50, range = None):
+    def generate_counts_bins(self, num_bins = 50, range = None, heatmap = None):
+        if heatmap != None:
+            self.heatmap = heatmap
         heatmap = self.heatmap[~np.isnan(self.heatmap)]
         heatmap = heatmap[heatmap > 0.4]
         heatmap = heatmap[heatmap < 3]
-        print(heatmap)
         counts, bins = np.histogram(heatmap, bins=num_bins, range = range)
         mu, sigma = stats.norm.fit(heatmap)
         self.counts = counts; self.bins = bins
@@ -642,14 +643,15 @@ class dist_plots():
             plt.savefig(write_path)
         return 0;
 
-    def plot_dist_barebones(self, num_bins = 50, label = None, range = None):
-        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins, range = range)
+    def plot_dist_barebones(self, num_bins = 50, heatmap = None, label = None, range = None):
+        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins, range = range, heatmap = None)
         if type(label) == type(None):
             plt.stairs(counts, bins)
         else:
             label = label + ', $\mu=%.3f, \sigma=%.3f$' %(mu, sigma)
             plt.stairs(counts, bins, label = label)
         return 0;
+
 
     def plot_dist_forloop(self, pmt_letters, num_bins = 50):
         "For multiple rings in a row."
