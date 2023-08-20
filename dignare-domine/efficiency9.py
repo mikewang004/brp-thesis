@@ -9,6 +9,7 @@ This file should also take into account the two different PMT versions and inclu
 Streamlined version of 'efficiency8.py', not backward compatitble.
 """
 
+from scipy import stats
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy.optimize as sp
@@ -16,8 +17,7 @@ import plotly.io as pio
 import plotly.express as px
 import plotly.graph_objects as go
 import plotly.colors as colors
-from scipy import stats
-
+#from extract_root.py import *
 pio.kaleido.scope.mathjax= None
 pio.renderers.default='browser'
 
@@ -39,6 +39,51 @@ min_std_fac = 2
 max_std_fac = 3
 
 
+class meanhitrate():
+    """Everything that has to do with the efficiency/rate arrays"""
+    def __init__(self, mean_hit_rate):
+        """Remember mean hit rate array has following structure:
+            [data, dom-id / pmt-no / eff / dom / string / pmt-serial / new pmt [yes/no] / rate [khz] ]"""
+        self.meanhitrate = mean_hit_rate
+        self.block_per_pmt()
+        self.filter_data()
+
+    def block_per_pmt(self):
+        self.meanhitrate = self.meanhitrate.reshape(int(self.meanhitrate.shape[0]/31), 31, 8) #block per PMT
+        return 0; 
+
+
+        
+    def avg_top_bottom_pmts(self, mid_pmt = 12):
+        """Averages over the top (0-11) and bottom (12-31) pmts."""
+        test = self.meanhitrate.shape
+        #self.meanhitrate = self.meanhitrate[~np.isnan(self.meanhitrate).any(axis=0)]
+
+        self.top_avg = np.mean(self.meanhitrate[:, 0:mid_pmt, :], axis=1)
+        self.bottom_avg = np.mean(self.meanhitrate[:, mid_pmt:31, :], axis=1)
+        #self.pmtavg = np.zeros([self.meanhitrate.shape[0]*2, self.meanhitrate.shape[2]])
+        #self.pmtavg[::2, :] = self.top_avg; self.pmtavg[1::2, :] = self.bottom_avg;
+        #self.top_length = self.top_avg.shape[0]
+        #self.top_mask = self.top_avg[:-1] == self.top_avg[1:]
+        return 0;
+
+    def filter_data(self):
+        """Removes all outliers greater than say 3 sigma from the average. Default usage is on efficiency and rate"""
+        j = 0
+        for i in range(1, self.meanhitrate.shape[0]):
+        #for i in range(1, 25):
+            if self.meanhitrate[i-1, 0, 3] != self.meanhitrate[i,0,  3] or i == 377: #checks for start new string
+                avg_eff, std_eff = np.nanmean(self.meanhitrate[j:i, :, 2]), np.nanstd(self.meanhitrate[j:i:, :, 2])
+                avg_rate, std_rate = np.nanmean(self.meanhitrate[j:i, :, 7]), np.nanstd(self.meanhitrate[j:i, :, 7])
+                #Now create new filter which nans 
+                index_eff = np.abs(avg_eff - self.meanhitrate[j:i, :, 2]) < 1 * std_eff
+                index_rate = np.abs(avg_rate - self.meanhitrate[j:i, :, 7]) < 1 * std_rate
+                index_all = index_eff * index_rate
+                self.meanhitrate[j:i, :, 2] = np.where(index_all, self.meanhitrate[j:i, :, 2], np.nan)
+                self.meanhitrate[j:i, :, 7] = np.where(index_all, self.meanhitrate[j:i, :, 7], np.nan)
+                j = i
+        return 0;
+
 class map_hit_data():
     """Connects the muon hit data only identified per identifier to a map containing the key to which floor/string it is located in."""
     """Note initial data muon_hit_data is 2d array w/ column headers module-id / pmt number / amount of hits.
@@ -54,12 +99,14 @@ class map_hit_data():
             self.muon_hit_data = muon_hit_data
             self.append_eff_data()
             self.append_pmt_serials()
+            self.append_hit_rates()
             self.mod_id_to_floor_string()
             if apply_shadow_mask != None:
                 self.apply_shadow_mask(filter = apply_shadow_mask) #can be True or False
-            self.pmt_no_to_ring_letter()
             if new_versions != None: 
+                print("test")
                 self.apply_pmt_mask(new_versions = new_versions)
+            self.pmt_no_to_ring_letter()
         else:
             self.floor_str_hit = floor_str_hit
 
@@ -94,10 +141,23 @@ class map_hit_data():
         self.muon_hit_data = new_muon_hit_data
         return 0;
 
+    def append_hit_rates(self, single_rates_path = "bins/mean_hit_rate.npy"):
+        single_rates = meanhitrate(np.load(single_rates_path))
+        new_muon_hit_data = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+1])
+        new_muon_hit_data[:,:,:-1] = self.muon_hit_data
+        for i in range(0, len(self.muon_hit_data)):
+            for j in range(0, len(self.muon_hit_data[:, 0, 0])):
+                if self.muon_hit_data[i, 0, 0] == single_rates.meanhitrate[j, 0, 0]:
+                    for k in range(0, 31):
+                        new_muon_hit_data[i, k, 6] = single_rates.meanhitrate[i, k, 7]
+                    break
+        self.muon_hit_data = new_muon_hit_data
+        return 0; 
+
 
     def mod_id_to_floor_string(self):
         """Transforms data from a 2D to a 3D array including the different pmts. 
-        Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits; eff; pmt_serial; pmt_old/new]
+        Note output is of the form: amount of mod-ids / pmts numbers / [str no; floor no; mod-id; pmt-no; no. hits; eff; pmt_serial; pmt_old/new; rates]
         Also note that mod-id refers to which DOM one is looking at"""
         floor_str_hit = np.zeros([self.muon_hit_data.shape[0], self.muon_hit_data.shape[1], self.muon_hit_data.shape[2]+2])
         mapping = dict(zip(self.modid_map[:,0], range(len(modid_map))))
@@ -150,7 +210,9 @@ class map_hit_data():
             #masked_floor_str_hit = np.ma.masked_array(current_floor_str_hit, np.tile(mask, (8,1)).T)
             #new_floor_str_hit[:, i, :] = masked_floor_str_hit.filled(fill_value= np.nan)
             masked_floor_str_hit = np.ma.masked_array(current_floor_str_hit[:, 4:6], np.tile(mask, (2,1)).T)
+            masked_floor_rates_only = np.ma.masked_array(current_floor_str_hit[:, 8], np.tile(mask, (1,1)).T)
             new_floor_str_hit[:, i, 4:6] = masked_floor_str_hit.filled(fill_value= np.nan)
+            new_floor_str_hit[:, i, 8] = masked_floor_rates_only.filled(fill_value= np.nan)
         self.floor_str_hit = new_floor_str_hit
         return 0;
 
@@ -200,8 +262,8 @@ class map_hit_data():
         return pmt_group_pairs
 
     def heatmap_array_single_group(self, pmt_group_mean_sorted, pmt_group_no, heatmap, floorlist, stringlist, int_rates_or_eff):
-        """int_rates_or_eff = 4 for rates; =5 for efficiencies"""
-        k = 0; m = 0; x = 0; j = 0; l = 0; #n = 4 for rates; n = 5 for efficiencies 
+        """int_rates_or_eff = 4 for rates; =5 for efficiencies; = 9 for single rates"""
+        k = 0; m = 0; x = 0; j = 0; l = 0; #n = 4 for rates; n = 5 for efficiencies or 
         for i in range(1, pmt_group_mean_sorted.shape[0]): #first fill in the x/string direction
             #New approach: floorlist index is not the same as pmt group mean sorted index. 
             if pmt_group_mean_sorted[i, 0] != pmt_group_mean_sorted[i-1, 0] or i == pmt_group_mean_sorted.shape[0]-1:
@@ -306,7 +368,7 @@ class heatmap():
                 for i in range(0, new_heatmap.shape[0]):
                     new_heatmap[i, -1, -1] = np.nanmean(new_heatmap[i, :-1, :-1])
             else:
-                new_heatmap[:, -1, -1] = np.nan #this corner does not mean anything and should have no data
+                new_heatmap[:, -1, -1] = np.nanmean #this corner does not mean anything and should have no data
         if type(append_list_1) == type(None) and type(append_list_2) == type(None):
             return new_heatmap, floorlist, stringlist
         else:
@@ -620,13 +682,19 @@ class dist_plots():
         #
 
     def generate_counts_bins(self, num_bins = 50, range = None, heatmap = None):
-        if heatmap != None:
+        if type(heatmap) != type(None):
             self.heatmap = heatmap
-        heatmap = self.heatmap[~np.isnan(self.heatmap)]
-        heatmap = heatmap[heatmap > 0.4]
-        heatmap = heatmap[heatmap < 3]
-        counts, bins = np.histogram(heatmap, bins=num_bins, range = range)
-        mu, sigma = stats.norm.fit(heatmap)
+        heatmap = heatmap[~np.isnan(heatmap)]
+        #heatmap = heatmap[heatmap > 0.4]
+        #heatmap = heatmap[heatmap < 3]
+        if range == None:
+            counts, bins = np.histogram(heatmap, bins=num_bins)
+            mu, sigma = stats.norm.fit(heatmap)
+        else:
+            counts, bins = np.histogram(heatmap, bins=num_bins, range = range)
+            heatmap = heatmap[heatmap > range[0]]
+            heatmap = heatmap[heatmap < range[1]]
+            mu, sigma = stats.norm.fit(heatmap)
         self.counts = counts; self.bins = bins
         return counts, bins, mu, sigma
 
@@ -644,7 +712,7 @@ class dist_plots():
         return 0;
 
     def plot_dist_barebones(self, num_bins = 50, heatmap = None, label = None, range = None):
-        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins, range = range, heatmap = None)
+        counts, bins, mu, sigma = self.generate_counts_bins(num_bins = num_bins, range = range, heatmap = heatmap)
         if type(label) == type(None):
             plt.stairs(counts, bins)
         else:
